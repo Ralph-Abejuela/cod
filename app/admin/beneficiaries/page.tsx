@@ -77,6 +77,7 @@ export default function AdminBeneficiariesPage() {
 	
 	const [sortBy, setSortBy] = useState("date-desc");
 	const [filterProgram, setFilterProgram] = useState("all");
+	const [filterStatus, setFilterStatus] = useState("all");
 
 	// States for actions (mocking modal behavior with inline forms for simplicity)
 	const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -118,7 +119,9 @@ export default function AdminBeneficiariesPage() {
 			const mainProgram = b.programs[0]?.programId || "";
 			const matchesProgram = filterProgram === "all" || mainProgram === filterProgram;
 
-			return matchesSearch && matchesProgram;
+			const matchesStatus = filterStatus === "all" || b.applicationStatus === filterStatus;
+
+			return matchesSearch && matchesProgram && matchesStatus;
 		})
 		.sort((a, b) => {
 			if (sortBy === "date-desc") {
@@ -239,7 +242,7 @@ export default function AdminBeneficiariesPage() {
 							Review registrations, update status, and record benefit releases.
 						</p>
 					</div>
-					<div className="flex flex-col sm:flex-row gap-3">
+					<div className="flex flex-col sm:flex-row flex-wrap gap-3">
 						<Select value={filterProgram} onValueChange={setFilterProgram}>
 							<SelectTrigger className="w-full sm:w-40 bg-background">
 								<SelectValue placeholder="All Programs" />
@@ -251,6 +254,19 @@ export default function AdminBeneficiariesPage() {
 										{p.name}
 									</SelectItem>
 								))}
+							</SelectContent>
+						</Select>
+
+						<Select value={filterStatus} onValueChange={setFilterStatus}>
+							<SelectTrigger className="w-full sm:w-40 bg-background">
+								<SelectValue placeholder="All Statuses" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All Statuses</SelectItem>
+								<SelectItem value="Pending">Pending</SelectItem>
+								<SelectItem value="Approved">Approved</SelectItem>
+								<SelectItem value="Released">Released</SelectItem>
+								<SelectItem value="Rejected">Rejected</SelectItem>
 							</SelectContent>
 						</Select>
 
