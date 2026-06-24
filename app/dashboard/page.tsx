@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -26,34 +27,34 @@ import {
 
 // --- Mock data ---
 const summaryStats = [
-  { title: "Total Assets", value: "1,284", change: "+12 this month", trend: "up" },
-  { title: "Active Users", value: "56", change: "+3 this week", trend: "up" },
-  { title: "Pending Requests", value: "18", change: "5 urgent", trend: "warn" },
-  { title: "Maintenance Due", value: "7", change: "2 overdue", trend: "down" },
+  { title: "Total Beneficiaries", value: "1,284", change: "+12 this month", trend: "up" },
+  { title: "Active Applications", value: "56", change: "+3 this week", trend: "up" },
+  { title: "Pending Reviews", value: "18", change: "5 urgent", trend: "warn" },
+  { title: "Total Released", value: "₱ 12M", change: "₱ 1.2M this month", trend: "up" },
 ];
 
 const recentActivity = [
-  { id: "ACT-001", user: "Maria Santos", action: "Checked out Laptop #L-0421", status: "Completed", date: "2026-06-24" },
-  { id: "ACT-002", user: "Juan Cruz", action: "Requested Projector #P-0088", status: "Pending", date: "2026-06-24" },
-  { id: "ACT-003", user: "Ana Reyes", action: "Returned Tablet #T-0215", status: "Completed", date: "2026-06-23" },
-  { id: "ACT-004", user: "Carlos Tan", action: "Reported damage on Monitor #M-0312", status: "Under Review", date: "2026-06-23" },
-  { id: "ACT-005", user: "Liza Gomez", action: "Requested Desktop #D-0190", status: "Approved", date: "2026-06-22" },
+  { id: "ACT-001", user: "Maria Santos", action: "Approved Application", status: "Approved", date: "2026-06-24" },
+  { id: "ACT-002", user: "Juan Cruz", action: "Submitted Application", status: "Pending", date: "2026-06-24" },
+  { id: "ACT-003", user: "Ana Reyes", action: "Released Cash Aid", status: "Completed", date: "2026-06-23" },
+  { id: "ACT-004", user: "Carlos Tan", action: "Rejected Application", status: "Under Review", date: "2026-06-23" },
+  { id: "ACT-005", user: "Liza Gomez", action: "Released Pension", status: "Completed", date: "2026-06-22" },
 ];
 
-const assetCategories = [
-  { name: "Laptops", count: 342, available: 89 },
-  { name: "Desktops", count: 256, available: 41 },
-  { name: "Projectors", count: 48, available: 12 },
-  { name: "Tablets", count: 180, available: 55 },
-  { name: "Monitors", count: 310, available: 73 },
-  { name: "Printers", count: 148, available: 22 },
+const programStats = [
+  { name: "4Ps", count: 342, pending: 89 },
+  { name: "Senior Citizen", count: 256, pending: 41 },
+  { name: "PWD", count: 48, pending: 12 },
+  { name: "Solo Parent", count: 180, pending: 55 },
+  { name: "TUPAD", count: 310, pending: 73 },
+  { name: "AICS", count: 148, pending: 22 },
 ];
 
 const teamMembers = [
-  { name: "Maria Santos", role: "IT Admin", initials: "MS" },
-  { name: "Juan Cruz", role: "Asset Manager", initials: "JC" },
-  { name: "Ana Reyes", role: "Technician", initials: "AR" },
-  { name: "Carlos Tan", role: "Technician", initials: "CT" },
+  { name: "Dir. Jose Manalo", role: "Admin", initials: "JM" },
+  { name: "Dir. Ana Reyes", role: "Releasing Officer", initials: "AR" },
+  { name: "Engr. Pedro Santos", role: "Reviewer", initials: "PS" },
+  { name: "Carlos Tan", role: "Clerk", initials: "CT" },
 ];
 
 function getStatusVariant(status: string) {
@@ -78,21 +79,18 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold tracking-tight">CAMS</h1>
-            <Badge variant="outline" className="text-[10px]">
-              v1.0
-            </Badge>
+            <h1 className="text-lg font-semibold tracking-tight">Community Assist</h1>
           </div>
           <nav className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              Dashboard
-            </Button>
-            <Button variant="ghost" size="sm">
-              Assets
-            </Button>
-            <Button variant="ghost" size="sm">
-              Reports
-            </Button>
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm">Dashboard</Button>
+            </Link>
+            <Link href="/admin/beneficiaries">
+              <Button variant="ghost" size="sm" className="font-semibold">Manage Beneficiaries</Button>
+            </Link>
+            <Link href="/report">
+              <Button variant="ghost" size="sm">Reports</Button>
+            </Link>
             <Separator orientation="vertical" className="mx-1 h-5" />
             <Avatar className="h-7 w-7">
               <AvatarImage src="" alt="User" />
@@ -109,10 +107,12 @@ export default function DashboardPage() {
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
             <p className="text-sm text-muted-foreground">
-              Centralized Asset Management System overview
+              Centralized Assistance Management System overview
             </p>
           </div>
-          <Button size="sm">+ New Asset</Button>
+          <Link href="/beneficiary">
+            <Button size="sm">+ New Beneficiary (Public Portal)</Button>
+          </Link>
         </div>
 
         {/* Summary Cards */}
@@ -136,7 +136,7 @@ export default function DashboardPage() {
         <Tabs defaultValue="activity">
           <TabsList>
             <TabsTrigger value="activity">Recent Activity</TabsTrigger>
-            <TabsTrigger value="assets">Asset Categories</TabsTrigger>
+            <TabsTrigger value="programs">Program Stats</TabsTrigger>
             <TabsTrigger value="team">Team</TabsTrigger>
           </TabsList>
 
@@ -146,7 +146,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>
-                  Latest asset transactions and requests across the system.
+                  Latest application updates and benefit releases.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -188,29 +188,28 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Asset Categories */}
-          <TabsContent value="assets">
+          {/* Tab: Program Stats */}
+          <TabsContent value="programs">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {assetCategories.map((cat) => (
+              {programStats.map((cat) => (
                 <Card key={cat.name}>
                   <CardHeader>
                     <CardTitle>{cat.name}</CardTitle>
                     <CardDescription>
-                      {cat.count} total &middot; {cat.available} available
+                      {cat.count} total &middot; {cat.pending} pending applications
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {/* Simple progress-like bar */}
                     <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                       <div
                         className="h-full rounded-full bg-primary transition-all"
                         style={{
-                          width: `${Math.round((cat.available / cat.count) * 100)}%`,
+                          width: `${Math.round((cat.pending / cat.count) * 100)}%`,
                         }}
                       />
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {Math.round((cat.available / cat.count) * 100)}% available
+                      {Math.round((cat.pending / cat.count) * 100)}% applications pending review
                     </p>
                   </CardContent>
                 </Card>
@@ -224,7 +223,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle>Team Members</CardTitle>
                 <CardDescription>
-                  People managing and maintaining assets.
+                  People managing and verifying applications.
                 </CardDescription>
               </CardHeader>
               <CardContent>
