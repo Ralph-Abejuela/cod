@@ -53,7 +53,7 @@ export default async function DashboardPage() {
 		},
 		{
 			title: "Total Released",
-			value: `₱ ${(stats?.totalReleased || 0).toLocaleString()}`,
+			value: `P ${(stats?.totalReleased || 0).toLocaleString()}`,
 			change: "Total benefits distributed",
 		},
 	];
