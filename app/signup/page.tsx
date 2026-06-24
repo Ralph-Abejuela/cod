@@ -15,10 +15,12 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-export default function LoginPage() {
+export default function SignUpPage() {
     const router = useRouter();
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [pending, setPending] = useState(false);
 
@@ -33,16 +35,28 @@ export default function LoginPage() {
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setError(null);
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            return;
+        }
+
+        if (password.length < 8) {
+            setError("Password must be at least 8 characters");
+            return;
+        }
+
         setPending(true);
 
         try {
-            const { error: signInError } = await authClient.signIn.email({
+            const { error: signUpError } = await authClient.signUp.email({
+                name,
                 email,
                 password,
             });
-            if (signInError) {
+            if (signUpError) {
                 setError(
-                    signInError.message ?? signInError.statusText ?? "Sign in failed",
+                    signUpError.message ?? signUpError.statusText ?? "Sign up failed",
                 );
                 return;
             }
@@ -58,15 +72,28 @@ export default function LoginPage() {
         <div className="flex min-h-full flex-1 items-center justify-center p-4">
             <Card className="w-full max-w-sm">
                 <CardHeader>
-                    <CardTitle>Sign in</CardTitle>
-                    <CardDescription>Enter your email below to sign in</CardDescription>
+                    <CardTitle>Create an account</CardTitle>
+                    <CardDescription>
+                        Enter your details below to create your account
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <Field>
-                            <FieldLabel htmlFor="email">Email</FieldLabel>
+                            <FieldLabel htmlFor="name">Full Name</FieldLabel>
                             <Input
-                                id="email"
+                                id="name"
+                                type="text"
+                                placeholder="Juan Dela Cruz"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                            />
+                        </Field>
+                        <Field>
+                            <FieldLabel htmlFor="signup-email">Email</FieldLabel>
+                            <Input
+                                id="signup-email"
                                 type="email"
                                 placeholder="you@example.com"
                                 value={email}
@@ -75,13 +102,26 @@ export default function LoginPage() {
                             />
                         </Field>
                         <Field>
-                            <FieldLabel htmlFor="password">Password</FieldLabel>
+                            <FieldLabel htmlFor="signup-password">Password</FieldLabel>
                             <Input
-                                id="password"
+                                id="signup-password"
                                 type="password"
-                                placeholder="Enter your password"
+                                placeholder="At least 8 characters"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </Field>
+                        <Field>
+                            <FieldLabel htmlFor="confirm-password">
+                                Confirm Password
+                            </FieldLabel>
+                            <Input
+                                id="confirm-password"
+                                type="password"
+                                placeholder="Re-enter your password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
                             />
                         </Field>
@@ -89,15 +129,15 @@ export default function LoginPage() {
                             <p className="text-xs/relaxed text-destructive">{error}</p>
                         )}
                         <Button type="submit" disabled={pending} className="w-full">
-                            {pending ? "Signing in…" : "Sign in"}
+                            {pending ? "Creating account…" : "Sign up"}
                         </Button>
                         <p className="text-center text-xs text-muted-foreground">
-                            Don&apos;t have an account?{" "}
+                            Already have an account?{" "}
                             <Link
-                                href="/signup"
+                                href="/login"
                                 className="font-medium text-foreground underline-offset-4 hover:underline"
                             >
-                                Sign up
+                                Sign in
                             </Link>
                         </p>
                     </form>
