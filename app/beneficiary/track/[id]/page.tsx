@@ -69,9 +69,9 @@ function AppStatusBadge({ status }: { status: ApplicationStatus }) {
 export default async function TrackApplicationPage({
 	params,
 }: {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }) {
-	const { id } = params;
+	const { id } = await params;
 	const data = await getBeneficiaryByIdAction(id);
 
 	if (!data) {
@@ -164,7 +164,9 @@ export default async function TrackApplicationPage({
 	});
 
 	// Sort chronologically
-	timelineEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+	timelineEvents.sort(
+		(a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+	);
 
 	return (
 		<div className="min-h-screen bg-background print:bg-white print:min-h-0">
@@ -215,7 +217,8 @@ export default async function TrackApplicationPage({
 							Application Tracker
 						</h1>
 						<p className="text-sm text-muted-foreground print:text-black">
-							Welcome back, {beneficiary.firstName}. Here is the timeline of your benefits and programs.
+							Welcome back, {beneficiary.firstName}. Here is the timeline of
+							your benefits and programs.
 						</p>
 					</div>
 					<div className="flex items-center gap-3">
@@ -230,19 +233,30 @@ export default async function TrackApplicationPage({
 						<Card>
 							<CardHeader>
 								<CardTitle>History & Benefits Timeline</CardTitle>
-								<CardDescription>A chronological view of your enrollments and received benefits.</CardDescription>
+								<CardDescription>
+									A chronological view of your enrollments and received
+									benefits.
+								</CardDescription>
 							</CardHeader>
 							<CardContent>
 								<div className="relative border-l-2 border-zinc-200 ml-4 space-y-8 pb-4">
 									{timelineEvents.map((evt, index) => (
 										<div key={evt.id} className="relative pl-8">
-											<div className={`absolute -left-[17px] top-1 h-8 w-8 rounded-full border-4 border-white ${evt.color} flex items-center justify-center text-sm shadow-sm`}>
+											<div
+												className={`absolute -left-[17px] top-1 h-8 w-8 rounded-full border-4 border-white ${evt.color} flex items-center justify-center text-sm shadow-sm`}
+											>
 												{evt.icon}
 											</div>
 											<div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 shadow-sm">
-												<p className="text-xs font-semibold text-muted-foreground mb-1">{evt.date}</p>
-												<h3 className="text-sm font-bold text-zinc-900">{evt.title}</h3>
-												<p className="text-sm text-zinc-600 mt-1">{evt.description}</p>
+												<p className="text-xs font-semibold text-muted-foreground mb-1">
+													{evt.date}
+												</p>
+												<h3 className="text-sm font-bold text-zinc-900">
+													{evt.title}
+												</h3>
+												<p className="text-sm text-zinc-600 mt-1">
+													{evt.description}
+												</p>
 											</div>
 										</div>
 									))}

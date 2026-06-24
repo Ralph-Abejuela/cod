@@ -45,7 +45,7 @@ export default function ProgramUtilizationPDF({
 
 				{data.programs.map((p, i) => (
 					<View
-						key={i}
+						key={p.name}
 						style={{
 							...s.tableRow,
 							...(i % 2 === 1 ? s.tableRowAlt : {}),
@@ -63,8 +63,8 @@ export default function ProgramUtilizationPDF({
 
 				{data.programs
 					.filter((p) => p.releases.length > 0)
-					.map((prog, pi) => (
-						<View key={pi} wrap={false}>
+					.map((prog) => (
+						<View key={`releases-${prog.name}`} wrap={false}>
 							<Text style={s.sectionHeading}>{prog.name} — Releases</Text>
 
 							<View

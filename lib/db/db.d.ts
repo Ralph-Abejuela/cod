@@ -88,7 +88,6 @@ export interface Session {
   createdAt: Generated<Timestamp>;
   expiresAt: Timestamp;
   id: string;
-  impersonatedBy: string | null;
   ipAddress: string | null;
   token: string;
   updatedAt: Timestamp;
@@ -97,9 +96,6 @@ export interface Session {
 }
 
 export interface User {
-  banExpires: Timestamp | null;
-  banned: boolean | null;
-  banReason: string | null;
   createdAt: Generated<Timestamp>;
   email: string;
   emailVerified: boolean;
