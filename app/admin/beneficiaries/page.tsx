@@ -74,6 +74,9 @@ export default function AdminBeneficiariesPage() {
 	const [programsList, setProgramsList] = useState<ProgramItem[]>([]);
 	const [search, setSearch] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
+	
+	const [sortBy, setSortBy] = useState("date-desc");
+	const [filterProgram, setFilterProgram] = useState("all");
 
 	// States for actions (mocking modal behavior with inline forms for simplicity)
 	const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -105,12 +108,50 @@ export default function AdminBeneficiariesPage() {
 
 	const programNames = new Map(programsList.map((p) => [p.id, p.name]));
 
-	const filtered = beneficiaries.filter(
-		(b) =>
-			b.firstName.toLowerCase().includes(search.toLowerCase()) ||
-			b.lastName.toLowerCase().includes(search.toLowerCase()) ||
-			b.id.toLowerCase().includes(search.toLowerCase()),
-	);
+	const filtered = beneficiaries
+		.filter((b) => {
+			const matchesSearch =
+				b.firstName.toLowerCase().includes(search.toLowerCase()) ||
+				b.lastName.toLowerCase().includes(search.toLowerCase()) ||
+				b.id.toLowerCase().includes(search.toLowerCase());
+			
+			const mainProgram = b.programs[0]?.programId || "";
+			const matchesProgram = filterProgram === "all" || mainProgram === filterProgram;
+
+			return matchesSearch && matchesProgram;
+		})
+		.sort((a, b) => {
+			if (sortBy === "date-desc") {
+				return new Date(b.dateRegistered).getTime() - new Date(a.dateRegistered).getTime();
+			} else if (sortBy === "date-asc") {
+				return new Date(a.dateRegistered).getTime() - new Date(b.dateRegistered).getTime();
+			} else if (sortBy === "name-asc") {
+				return a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName);
+			} else if (sortBy === "name-desc") {
+				return b.lastName.localeCompare(a.lastName) || b.firstName.localeCompare(a.firstName);
+			} else if (sortBy === "id-asc") {
+				return a.id.localeCompare(b.id);
+			} else if (sortBy === "id-desc") {
+				return b.id.localeCompare(a.id);
+			} else if (sortBy === "location-asc") {
+				return a.province.localeCompare(b.province) || a.municipality.localeCompare(b.municipality);
+			} else if (sortBy === "location-desc") {
+				return b.province.localeCompare(a.province) || b.municipality.localeCompare(a.municipality);
+			} else if (sortBy === "program-asc") {
+				const progA = a.programs[0]?.programId || "";
+				const progB = b.programs[0]?.programId || "";
+				return progA.localeCompare(progB);
+			} else if (sortBy === "program-desc") {
+				const progA = a.programs[0]?.programId || "";
+				const progB = b.programs[0]?.programId || "";
+				return progB.localeCompare(progA);
+			} else if (sortBy === "status-asc") {
+				return a.applicationStatus.localeCompare(b.applicationStatus);
+			} else if (sortBy === "status-desc") {
+				return b.applicationStatus.localeCompare(a.applicationStatus);
+			}
+			return 0;
+		});
 
 	async function handleStatusChange(e: React.FormEvent) {
 		e.preventDefault();
@@ -189,7 +230,7 @@ export default function AdminBeneficiariesPage() {
 			</header>
 
 			<main className="flex-1 p-6 mx-auto w-full max-w-7xl">
-				<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+				<div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
 					<div>
 						<h1 className="text-2xl font-bold tracking-tight">
 							Beneficiary Applications
@@ -198,12 +239,48 @@ export default function AdminBeneficiariesPage() {
 							Review registrations, update status, and record benefit releases.
 						</p>
 					</div>
-					<Input
-						placeholder="Search by ID or name..."
-						className="w-full sm:w-72"
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-					/>
+					<div className="flex flex-col sm:flex-row gap-3">
+						<Select value={filterProgram} onValueChange={setFilterProgram}>
+							<SelectTrigger className="w-full sm:w-40 bg-background">
+								<SelectValue placeholder="All Programs" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All Programs</SelectItem>
+								{programsList.map((p) => (
+									<SelectItem key={p.id} value={p.id}>
+										{p.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+
+						<Select value={sortBy} onValueChange={setSortBy}>
+							<SelectTrigger className="w-full sm:w-56 bg-background">
+								<SelectValue placeholder="Sort By" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="date-desc">Date Applied (Newest)</SelectItem>
+								<SelectItem value="date-asc">Date Applied (Oldest)</SelectItem>
+								<SelectItem value="name-asc">Name (A-Z)</SelectItem>
+								<SelectItem value="name-desc">Name (Z-A)</SelectItem>
+								<SelectItem value="id-asc">Control Number (A-Z)</SelectItem>
+								<SelectItem value="id-desc">Control Number (Z-A)</SelectItem>
+								<SelectItem value="location-asc">Location (A-Z)</SelectItem>
+								<SelectItem value="location-desc">Location (Z-A)</SelectItem>
+								<SelectItem value="program-asc">Program (A-Z)</SelectItem>
+								<SelectItem value="program-desc">Program (Z-A)</SelectItem>
+								<SelectItem value="status-asc">Status (A-Z)</SelectItem>
+								<SelectItem value="status-desc">Status (Z-A)</SelectItem>
+							</SelectContent>
+						</Select>
+
+						<Input
+							placeholder="Search by ID or name..."
+							className="w-full sm:w-64 bg-background"
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+						/>
+					</div>
 				</div>
 
 				<Card>

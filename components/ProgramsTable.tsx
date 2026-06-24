@@ -22,6 +22,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import type { ProgramItem } from "@/lib/beneficiary-data";
 import {
 	getProgramsAction,
@@ -34,6 +41,7 @@ export default function ProgramsTable() {
 	const [programs, setPrograms] = useState<ProgramItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [search, setSearch] = useState("");
+	const [sortBy, setSortBy] = useState("name-asc");
 	const [actionType, setActionType] = useState<"create" | "edit" | null>(null);
 	const [editId, setEditId] = useState<string | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<ProgramItem | null>(null);
@@ -51,12 +59,19 @@ export default function ProgramsTable() {
 		loadPrograms();
 	}, []);
 
-	const filtered = programs.filter(
-		(p) =>
+	const filtered = programs
+		.filter((p) =>
 			p.id.toLowerCase().includes(search.toLowerCase()) ||
 			p.name.toLowerCase().includes(search.toLowerCase()) ||
-			(p.description || "").toLowerCase().includes(search.toLowerCase()),
-	);
+			(p.description || "").toLowerCase().includes(search.toLowerCase())
+		)
+		.sort((a, b) => {
+			if (sortBy === "name-asc") return a.name.localeCompare(b.name);
+			if (sortBy === "name-desc") return b.name.localeCompare(a.name);
+			if (sortBy === "id-asc") return a.id.localeCompare(b.id);
+			if (sortBy === "id-desc") return b.id.localeCompare(a.id);
+			return 0;
+		});
 
 	async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -122,7 +137,18 @@ export default function ProgramsTable() {
 						Manage government programs available for beneficiary enrollment.
 					</p>
 				</div>
-				<div className="flex gap-3">
+				<div className="flex flex-col sm:flex-row gap-3">
+					<Select value={sortBy} onValueChange={setSortBy}>
+						<SelectTrigger className="w-full sm:w-40 bg-background">
+							<SelectValue placeholder="Sort By" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="name-asc">Name (A-Z)</SelectItem>
+							<SelectItem value="name-desc">Name (Z-A)</SelectItem>
+							<SelectItem value="id-asc">ID (A-Z)</SelectItem>
+							<SelectItem value="id-desc">ID (Z-A)</SelectItem>
+						</SelectContent>
+					</Select>
 					<Input
 						placeholder="Search by ID, name, or description..."
 						className="w-full sm:w-64"
