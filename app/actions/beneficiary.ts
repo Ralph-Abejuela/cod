@@ -261,3 +261,30 @@ export async function getDashboardStatsAction() {
     return null;
   }
 }
+
+export async function globalSearchAction(query: string) {
+  try {
+    if (!query || query.trim() === "") return [];
+
+    const searchStr = `%${query.toLowerCase()}%`;
+    const searchStrUpper = `%${query.toUpperCase()}%`;
+
+    // Search by ID, First Name, Last Name
+    const results = await db.selectFrom("beneficiary")
+      .selectAll()
+      .where((eb) =>
+        eb.or([
+          eb("id", "like", searchStrUpper),
+          eb("firstName", "ilike", searchStr),
+          eb("lastName", "ilike", searchStr),
+        ])
+      )
+      .limit(10)
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error("Error in global search:", error);
+    return [];
+  }
+}

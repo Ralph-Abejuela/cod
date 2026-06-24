@@ -20,17 +20,18 @@ import {
 import { type ApplicationStatus } from "@/lib/beneficiary-data";
 import { BeneficiaryCard } from "../../page"; // Reusing the visual card
 import { getBeneficiaryByIdAction } from "@/app/actions/beneficiary";
+import { PrintButton } from "@/components/PrintButton";
 
 function AppStatusBadge({ status }: { status: ApplicationStatus }) {
   switch (status) {
     case "Pending":
       return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Pending Review</Badge>;
     case "Approved":
-      return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">Approved</Badge>;
+      return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 print:bg-transparent print:text-black print:border print:border-black">Approved</Badge>;
     case "Rejected":
-      return <Badge variant="destructive">Rejected</Badge>;
+      return <Badge variant="destructive" className="print:bg-transparent print:text-black print:border print:border-black">Rejected</Badge>;
     case "Released":
-      return <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">Benefits Released</Badge>;
+      return <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600 print:bg-transparent print:text-black print:border print:border-black">Benefits Released</Badge>;
   }
 }
 
@@ -63,8 +64,8 @@ export default async function TrackApplicationPage({ params }: { params: { id: s
   const totalReceived = releases.reduce((sum, r) => sum + r.amount, 0);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="min-h-screen bg-background print:bg-white print:min-h-0">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 print:hidden">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="text-lg font-semibold tracking-tight">
@@ -85,15 +86,25 @@ export default async function TrackApplicationPage({ params }: { params: { id: s
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      {/* Print-only Header */}
+      <div className="hidden print:block text-center mb-8 border-b-2 border-black pb-4">
+        <h1 className="text-2xl font-bold uppercase tracking-wider">Republic of the Philippines</h1>
+        <p className="text-sm font-semibold mt-1">Official Beneficiary Report</p>
+        <p className="text-xs text-gray-600 mt-2">Generated on: {new Date().toLocaleDateString()}</p>
+      </div>
+
+      <main className="mx-auto max-w-5xl px-6 py-8 print:p-0">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Application Tracker</h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground print:text-black">
               Welcome back, {beneficiary.firstName}. Here is the status of your application.
             </p>
           </div>
-          <AppStatusBadge status={beneficiary.applicationStatus} />
+          <div className="flex items-center gap-3">
+            <AppStatusBadge status={beneficiary.applicationStatus} />
+            <PrintButton />
+          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">

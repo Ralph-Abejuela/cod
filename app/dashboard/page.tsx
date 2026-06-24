@@ -25,6 +25,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { getDashboardStatsAction } from "@/app/actions/beneficiary";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { UserAvatar } from "@/components/user-avatar";
 
 // --- Mock data ---
@@ -100,6 +101,7 @@ export default async function DashboardPage() {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold tracking-tight">Community Assist</h1>
+            <GlobalSearch />
           </div>
           <nav className="flex items-center gap-2">
             <Link href="/dashboard">
