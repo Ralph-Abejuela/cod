@@ -70,11 +70,17 @@ export interface Claim {
   status: string;
 }
 
+export interface Program {
+  description: string | null;
+  id: string;
+  name: string;
+}
+
 export interface ProgramEnrollment {
   beneficiaryId: string;
   enrolledDate: string;
   id: Generated<number>;
-  program: string;
+  programId: string;
   status: string;
 }
 
@@ -118,6 +124,7 @@ export interface DB {
   beneficiary: Beneficiary;
   benefit_release: BenefitRelease;
   claim: Claim;
+  program: Program;
   program_enrollment: ProgramEnrollment;
   session: Session;
   user: User;
