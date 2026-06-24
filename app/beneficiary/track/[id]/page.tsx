@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -20,12 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  getBeneficiaryById,
-  getReleasesForBeneficiary,
-  type ApplicationStatus,
-} from "@/lib/beneficiary-data";
+import { type ApplicationStatus } from "@/lib/beneficiary-data";
 import { BeneficiaryCard } from "../../page"; // Reusing the visual card
+import { getBeneficiaryByIdAction } from "@/app/actions/beneficiary";
 
 function AppStatusBadge({ status }: { status: ApplicationStatus }) {
   switch (status) {
@@ -40,14 +34,11 @@ function AppStatusBadge({ status }: { status: ApplicationStatus }) {
   }
 }
 
-export default function TrackApplicationPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default async function TrackApplicationPage({ params }: { params: { id: string } }) {
+  const { id } = params;
+  const data = await getBeneficiaryByIdAction(id);
 
-  const beneficiary = getBeneficiaryById(id);
-  const releases = beneficiary ? getReleasesForBeneficiary(id) : [];
-
-  if (!beneficiary) {
+  if (!data) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Card className="w-full max-w-md text-center">
@@ -67,6 +58,7 @@ export default function TrackApplicationPage() {
     );
   }
 
+  const { beneficiary, releases } = data;
   const mainProgram = beneficiary.programs[0]?.program || "None";
   const totalReceived = releases.reduce((sum, r) => sum + r.amount, 0);
 

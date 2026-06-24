@@ -24,31 +24,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
-
-// --- Mock data ---
-const summaryStats = [
-  { title: "Total Beneficiaries", value: "1,284", change: "+12 this month", trend: "up" },
-  { title: "Active Applications", value: "56", change: "+3 this week", trend: "up" },
-  { title: "Pending Reviews", value: "18", change: "5 urgent", trend: "warn" },
-  { title: "Total Released", value: "₱ 12M", change: "₱ 1.2M this month", trend: "up" },
-];
-
-const recentActivity = [
-  { id: "ACT-001", user: "Maria Santos", action: "Approved Application", status: "Approved", date: "2026-06-24" },
-  { id: "ACT-002", user: "Juan Cruz", action: "Submitted Application", status: "Pending", date: "2026-06-24" },
-  { id: "ACT-003", user: "Ana Reyes", action: "Released Cash Aid", status: "Completed", date: "2026-06-23" },
-  { id: "ACT-004", user: "Carlos Tan", action: "Rejected Application", status: "Under Review", date: "2026-06-23" },
-  { id: "ACT-005", user: "Liza Gomez", action: "Released Pension", status: "Completed", date: "2026-06-22" },
-];
-
-const programStats = [
-  { name: "4Ps", count: 342, pending: 89 },
-  { name: "Senior Citizen", count: 256, pending: 41 },
-  { name: "PWD", count: 48, pending: 12 },
-  { name: "Solo Parent", count: 180, pending: 55 },
-  { name: "TUPAD", count: 310, pending: 73 },
-  { name: "AICS", count: 148, pending: 22 },
-];
+import { getDashboardStatsAction } from "@/app/actions/beneficiary";
 
 const teamMembers = [
   { name: "Dir. Jose Manalo", role: "Admin", initials: "JM" },
@@ -72,7 +48,25 @@ function getStatusVariant(status: string) {
   }
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const stats = await getDashboardStatsAction();
+  
+  const summaryStats = [
+    { title: "Total Beneficiaries", value: stats?.totalBeneficiaries || 0, change: "Registered in system" },
+    { title: "Active Applications", value: stats?.activeApps || 0, change: "Pending or Approved" },
+    { title: "Pending Reviews", value: stats?.pendingReviews || 0, change: "Needs admin action" },
+    { title: "Total Released", value: `₱ ${(stats?.totalReleased || 0).toLocaleString()}`, change: "Total benefits distributed" },
+  ];
+
+  const recentActivity = [
+    { id: "ACT-001", user: "Maria Santos", action: "Approved Application", status: "Approved", date: "2026-06-24" },
+    { id: "ACT-002", user: "Juan Cruz", action: "Submitted Application", status: "Pending", date: "2026-06-24" },
+    { id: "ACT-003", user: "Ana Reyes", action: "Released Cash Aid", status: "Completed", date: "2026-06-23" },
+    { id: "ACT-004", user: "Carlos Tan", action: "Rejected Application", status: "Under Review", date: "2026-06-23" },
+    { id: "ACT-005", user: "Liza Gomez", action: "Released Pension", status: "Completed", date: "2026-06-22" },
+  ];
+
+  const programStats = stats?.programs || [];
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}

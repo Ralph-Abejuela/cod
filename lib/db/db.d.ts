@@ -67,4 +67,59 @@ export interface DB {
   session: Session;
   user: User;
   verification: Verification;
+  beneficiary: BeneficiaryTable;
+  program_enrollment: ProgramEnrollmentTable;
+  benefit_release: BenefitReleaseTable;
+  claim: ClaimTable;
+}
+
+export interface BeneficiaryTable {
+  id: string;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  dateOfBirth: string;
+  gender: string;
+  civilStatus: string;
+  contactNumber: string;
+  email: string | null;
+  barangay: string;
+  municipality: string;
+  province: string;
+  applicationStatus: string;
+  dateRegistered: string;
+  dateApproved: string | null;
+  dateRejected: string | null;
+  dateReleased: string | null;
+  rejectionReason: string | null;
+  approvedBy: string | null;
+}
+
+export interface ProgramEnrollmentTable {
+  id: Generated<number>;
+  beneficiaryId: string;
+  program: string;
+  enrolledDate: string;
+  status: string;
+}
+
+export interface BenefitReleaseTable {
+  id: string;
+  beneficiaryId: string;
+  program: string;
+  assistanceType: string;
+  amount: number;
+  dateReleased: string;
+  releasingOfficer: string;
+  remarks: string | null;
+}
+
+export interface ClaimTable {
+  id: string;
+  beneficiaryId: string;
+  program: string;
+  description: string;
+  amount: number;
+  dateClaimed: string;
+  status: string;
 }

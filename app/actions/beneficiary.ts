@@ -1,0 +1,263 @@
+"use server";
+
+import { db } from "@/lib/db/database";
+import type { 
+  Beneficiary, 
+  ProgramEnrollment, 
+  BenefitRelease, 
+  Claim,
+  ApplicationStatus,
+  ProgramType
+} from "@/lib/beneficiary-data";
+import { revalidatePath } from "next/cache";
+
+// Generate ID Helper
+function generateBeneficiaryId() {
+  const randomStr = Math.floor(Math.random() * 9000 + 1000).toString();
+  return `BNFY-2026-${randomStr}`;
+}
+
+export async function registerBeneficiaryAction(data: Omit<Beneficiary, "id">) {
+  try {
+    const id = generateBeneficiaryId();
+    
+    // Insert beneficiary
+    await db.insertInto("beneficiary").values({
+      id,
+      firstName: data.firstName,
+      middleName: data.middleName || null,
+      lastName: data.lastName,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      civilStatus: data.civilStatus,
+      contactNumber: data.contactNumber,
+      email: data.email || null,
+      barangay: data.barangay,
+      municipality: data.municipality,
+      province: data.province,
+      applicationStatus: data.applicationStatus,
+      dateRegistered: data.dateRegistered,
+    }).execute();
+
+    // Insert program enrollment if exists
+    if (data.programs && data.programs.length > 0) {
+      await db.insertInto("program_enrollment").values(
+        data.programs.map((p) => ({
+          beneficiaryId: id,
+          program: p.program,
+          enrolledDate: p.enrolledDate,
+          status: p.status,
+        }))
+      ).execute();
+    }
+
+    revalidatePath("/admin/beneficiaries");
+    revalidatePath("/dashboard");
+    return { success: true, id };
+  } catch (error) {
+    console.error("Error registering beneficiary:", error);
+    return { success: false, error: "Failed to register beneficiary." };
+  }
+}
+
+export async function verifyAndGetBeneficiaryAction(controlNumber: string, lastName: string) {
+  try {
+    const b = await db.selectFrom("beneficiary")
+      .selectAll()
+      .where("id", "=", controlNumber.trim().toUpperCase())
+      .executeTakeFirst();
+
+    if (!b || b.lastName.toLowerCase() !== lastName.trim().toLowerCase()) {
+      return null;
+    }
+
+    const programs = await db.selectFrom("program_enrollment")
+      .selectAll()
+      .where("beneficiaryId", "=", b.id)
+      .execute();
+
+    const releases = await db.selectFrom("benefit_release")
+      .selectAll()
+      .where("beneficiaryId", "=", b.id)
+      .execute();
+
+    return {
+      beneficiary: {
+        ...b,
+        programs: programs as ProgramEnrollment[],
+      } as Beneficiary,
+      releases: releases as BenefitRelease[],
+    };
+  } catch (error) {
+    console.error("Error verifying beneficiary:", error);
+    return null;
+  }
+}
+
+export async function getBeneficiaryByIdAction(id: string) {
+  try {
+    const b = await db.selectFrom("beneficiary")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst();
+
+    if (!b) return null;
+
+    const programs = await db.selectFrom("program_enrollment")
+      .selectAll()
+      .where("beneficiaryId", "=", id)
+      .execute();
+
+    const releases = await db.selectFrom("benefit_release")
+      .selectAll()
+      .where("beneficiaryId", "=", id)
+      .execute();
+
+    return {
+      beneficiary: {
+        ...b,
+        programs: programs as ProgramEnrollment[],
+      } as Beneficiary,
+      releases: releases as BenefitRelease[],
+    };
+  } catch (error) {
+    console.error("Error fetching beneficiary:", error);
+    return null;
+  }
+}
+
+export async function getAdminBeneficiariesAction(): Promise<Beneficiary[]> {
+  try {
+    const beneficiaries = await db.selectFrom("beneficiary").selectAll().execute();
+    const programs = await db.selectFrom("program_enrollment").selectAll().execute();
+
+    return beneficiaries.map((b) => ({
+      ...b,
+      middleName: b.middleName || "",
+      email: b.email || "",
+      dateApproved: b.dateApproved || undefined,
+      dateRejected: b.dateRejected || undefined,
+      dateReleased: b.dateReleased || undefined,
+      rejectionReason: b.rejectionReason || undefined,
+      approvedBy: b.approvedBy || undefined,
+      programs: programs
+        .filter((p) => p.beneficiaryId === b.id)
+        .map((p) => ({
+          program: p.program as ProgramType,
+          enrolledDate: p.enrolledDate,
+          status: p.status as any,
+        })),
+    })) as Beneficiary[];
+  } catch (error) {
+    console.error("Error fetching admin beneficiaries:", error);
+    return [];
+  }
+}
+
+export async function updateApplicationStatusAction(
+  id: string, 
+  status: ApplicationStatus, 
+  reason?: string
+) {
+  try {
+    const now = new Date().toISOString().split("T")[0];
+    const updatePayload: any = { applicationStatus: status };
+
+    if (status === "Approved") {
+      updatePayload.dateApproved = now;
+      updatePayload.approvedBy = "Admin User";
+    } else if (status === "Rejected") {
+      updatePayload.dateRejected = now;
+      updatePayload.rejectionReason = reason;
+    } else if (status === "Released") {
+      updatePayload.dateReleased = now;
+    }
+
+    await db.updateTable("beneficiary")
+      .set(updatePayload)
+      .where("id", "=", id)
+      .execute();
+
+    revalidatePath("/admin/beneficiaries");
+    revalidatePath("/dashboard");
+    revalidatePath(`/beneficiary/track/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating status:", error);
+    return { success: false, error: "Failed to update status." };
+  }
+}
+
+export async function recordBenefitReleaseAction(data: Omit<BenefitRelease, "id">) {
+  try {
+    const randomStr = Math.floor(Math.random() * 900 + 100).toString();
+    const id = `REL-${randomStr}`;
+
+    await db.insertInto("benefit_release").values({
+      id,
+      beneficiaryId: data.beneficiaryId,
+      program: data.program,
+      assistanceType: data.assistanceType,
+      amount: data.amount,
+      dateReleased: data.dateReleased,
+      releasingOfficer: data.releasingOfficer,
+      remarks: data.remarks || null,
+    }).execute();
+
+    // Mark beneficiary as released as well
+    await db.updateTable("beneficiary")
+      .set({ 
+        applicationStatus: "Released", 
+        dateReleased: data.dateReleased 
+      })
+      .where("id", "=", data.beneficiaryId)
+      .execute();
+
+    revalidatePath("/admin/beneficiaries");
+    revalidatePath("/dashboard");
+    revalidatePath(`/beneficiary/track/${data.beneficiaryId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error recording release:", error);
+    return { success: false, error: "Failed to record release." };
+  }
+}
+
+export async function getDashboardStatsAction() {
+  try {
+    const totalBeneficiaries = await db.selectFrom("beneficiary").select((eb) => eb.fn.count("id").as("count")).executeTakeFirst();
+    const activeApps = await db.selectFrom("beneficiary").select((eb) => eb.fn.count("id").as("count")).where("applicationStatus", "in", ["Pending", "Approved"]).executeTakeFirst();
+    const pendingReviews = await db.selectFrom("beneficiary").select((eb) => eb.fn.count("id").as("count")).where("applicationStatus", "=", "Pending").executeTakeFirst();
+    const totalReleased = await db.selectFrom("benefit_release").select((eb) => eb.fn.sum("amount").as("sum")).executeTakeFirst();
+    
+    // program stats
+    const programCounts = await db.selectFrom("program_enrollment")
+      .select(["program"])
+      .select((eb) => eb.fn.count("id").as("count"))
+      .groupBy("program")
+      .execute();
+
+    const pendingProgramCounts = await db.selectFrom("program_enrollment")
+      .innerJoin("beneficiary", "beneficiary.id", "program_enrollment.beneficiaryId")
+      .select(["program"])
+      .select((eb) => eb.fn.count("program_enrollment.id").as("count"))
+      .where("beneficiary.applicationStatus", "=", "Pending")
+      .groupBy("program")
+      .execute();
+
+    return {
+      totalBeneficiaries: Number(totalBeneficiaries?.count || 0),
+      activeApps: Number(activeApps?.count || 0),
+      pendingReviews: Number(pendingReviews?.count || 0),
+      totalReleased: Number(totalReleased?.sum || 0),
+      programs: programCounts.map(pc => ({
+        name: pc.program,
+        count: Number(pc.count || 0),
+        pending: Number(pendingProgramCounts.find(pp => pp.program === pc.program)?.count || 0)
+      }))
+    };
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    return null;
+  }
+}

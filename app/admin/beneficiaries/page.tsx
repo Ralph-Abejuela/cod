@@ -32,8 +32,8 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import {
   type Beneficiary,
   type ApplicationStatus,
-  dummyBeneficiaries,
 } from "@/lib/beneficiary-data";
+import { getAdminBeneficiariesAction, updateApplicationStatusAction, recordBenefitReleaseAction } from "@/app/actions/beneficiary";
 
 function AdminStatusBadge({ status }: { status: ApplicationStatus }) {
   switch (status) {
@@ -49,12 +49,14 @@ function AdminStatusBadge({ status }: { status: ApplicationStatus }) {
 }
 
 export default function AdminBeneficiariesPage() {
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(dummyBeneficiaries);
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   
   // States for actions (mocking modal behavior with inline forms for simplicity)
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<"status" | "release" | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Status change form
   const [newStatus, setNewStatus] = useState<ApplicationStatus>("Pending");
@@ -64,6 +66,15 @@ export default function AdminBeneficiariesPage() {
   const [amount, setAmount] = useState("");
   const [assistanceType, setAssistanceType] = useState("");
 
+  React.useEffect(() => {
+    async function load() {
+      const data = await getAdminBeneficiariesAction();
+      setBeneficiaries(data);
+      setIsLoading(false);
+    }
+    load();
+  }, []);
+
   const filtered = beneficiaries.filter(
     (b) =>
       b.firstName.toLowerCase().includes(search.toLowerCase()) ||
@@ -71,50 +82,44 @@ export default function AdminBeneficiariesPage() {
       b.id.toLowerCase().includes(search.toLowerCase())
   );
 
-  function handleStatusChange(e: React.FormEvent) {
+  async function handleStatusChange(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedId) return;
+    setIsSubmitting(true);
 
-    setBeneficiaries((prev) =>
-      prev.map((b) => {
-        if (b.id !== selectedId) return b;
-        const now = new Date().toISOString().split("T")[0];
-        const baseUpdate = { ...b, applicationStatus: newStatus };
-        
-        if (newStatus === "Approved") {
-          return { ...baseUpdate, dateApproved: now, approvedBy: "Admin User" };
-        }
-        if (newStatus === "Rejected") {
-          return { ...baseUpdate, dateRejected: now, rejectionReason: rejectReason };
-        }
-        if (newStatus === "Released") {
-          return { ...baseUpdate, dateReleased: now };
-        }
-        return baseUpdate;
-      })
-    );
-    cancelAction();
+    const result = await updateApplicationStatusAction(selectedId, newStatus, rejectReason);
+    
+    if (result.success) {
+      const data = await getAdminBeneficiariesAction();
+      setBeneficiaries(data);
+      cancelAction();
+    }
+    setIsSubmitting(false);
   }
 
-  function handleRecordRelease(e: React.FormEvent) {
+  async function handleRecordRelease(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedId) return;
+    setIsSubmitting(true);
     
-    // In a real app, we'd add to the BenefitRelease table.
-    // For this UI, we just alert and mark the beneficiary as Released.
-    alert(`Benefit recorded: ₱${amount} for ${assistanceType}`);
+    const beneficiary = beneficiaries.find(b => b.id === selectedId);
     
-    setBeneficiaries((prev) =>
-      prev.map((b) => {
-        if (b.id !== selectedId) return b;
-        return {
-          ...b,
-          applicationStatus: "Released",
-          dateReleased: new Date().toISOString().split("T")[0],
-        };
-      })
-    );
-    cancelAction();
+    const result = await recordBenefitReleaseAction({
+      beneficiaryId: selectedId,
+      program: beneficiary?.programs[0]?.program || "4Ps",
+      assistanceType,
+      amount: Number(amount),
+      dateReleased: new Date().toISOString().split("T")[0],
+      releasingOfficer: "Admin User", // Simplified for now
+      remarks: "Processed via Admin Dashboard",
+    });
+    
+    if (result.success) {
+      const data = await getAdminBeneficiariesAction();
+      setBeneficiaries(data);
+      cancelAction();
+    }
+    setIsSubmitting(false);
   }
 
   function cancelAction() {

@@ -22,11 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  type Beneficiary,
   type ProgramType,
   ALL_PROGRAMS,
-  verifyBeneficiary,
 } from "@/lib/beneficiary-data";
+import { registerBeneficiaryAction, verifyAndGetBeneficiaryAction } from "@/app/actions/beneficiary";
 
 // ---------------------------------------------------------------------------
 // Live Beneficiary ID Card Preview
@@ -164,17 +163,21 @@ export default function BeneficiaryPage() {
   const [municipality, setMunicipality] = useState("");
   const [province, setProvince] = useState("");
   const [program, setProgram] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Track state
   const [trackId, setTrackId] = useState("");
   const [trackLastName, setTrackLastName] = useState("");
   const [trackError, setTrackError] = useState("");
+  const [isTrackSubmitting, setIsTrackSubmitting] = useState(false);
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const newBeneficiary: Beneficiary = {
-      id: `BNFY-2026-9999`, // Placeholder ID for dummy logic
+    setIsSubmitting(true);
+    setSuccess(null);
+    
+    const result = await registerBeneficiaryAction({
       firstName,
       middleName,
       lastName,
@@ -201,39 +204,45 @@ export default function BeneficiaryPage() {
         : [],
       applicationStatus: "Pending",
       dateRegistered: new Date().toISOString().split("T")[0],
-    };
-    // In a real app we'd save this.
-    setSuccess(true);
+    });
 
-    // Reset form
-    setFirstName("");
-    setMiddleName("");
-    setLastName("");
-    setDateOfBirth("");
-    setGender("");
-    setCivilStatus("");
-    setContactNumber("");
-    setEmail("");
-    setBarangay("");
-    setMunicipality("");
-    setProvince("");
-    setProgram("");
+    setIsSubmitting(false);
 
-    setTimeout(() => setSuccess(false), 3000);
+    if (result.success) {
+      setSuccess(result.id!);
+      
+      // Reset form
+      setFirstName("");
+      setMiddleName("");
+      setLastName("");
+      setDateOfBirth("");
+      setGender("");
+      setCivilStatus("");
+      setContactNumber("");
+      setEmail("");
+      setBarangay("");
+      setMunicipality("");
+      setProvince("");
+      setProgram("");
+    }
   }
 
-  function handleTrack(e: FormEvent) {
+  async function handleTrack(e: FormEvent) {
     e.preventDefault();
     setTrackError("");
+    setIsTrackSubmitting(true);
     
     if (!trackId || !trackLastName) {
       setTrackError("Please fill in both fields.");
+      setIsTrackSubmitting(false);
       return;
     }
 
-    const verified = verifyBeneficiary(trackId, trackLastName);
+    const verified = await verifyAndGetBeneficiaryAction(trackId, trackLastName);
+    setIsTrackSubmitting(false);
+    
     if (verified) {
-      router.push(`/beneficiary/track/${verified.id}`);
+      router.push(`/beneficiary/track/${verified.beneficiary.id}`);
     } else {
       setTrackError("No matching record found. Please check your details.");
     }
@@ -447,12 +456,12 @@ export default function BeneficiaryPage() {
 
                   {success && (
                     <p className="text-xs font-medium text-emerald-600">
-                      ✓ Beneficiary registered successfully! You will be given a control number upon approval.
+                      ✓ Beneficiary registered successfully! Your control number is <strong>{success}</strong>.
                     </p>
                   )}
 
-                  <Button type="submit" className="w-full">
-                    + Register Beneficiary
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Registering..." : "+ Register Beneficiary"}
                   </Button>
                 </form>
               </CardContent>
@@ -516,8 +525,8 @@ export default function BeneficiaryPage() {
                   {trackError && (
                     <p className="text-xs text-destructive">{trackError}</p>
                   )}
-                  <Button type="submit" variant="secondary" className="w-full">
-                    Track Application
+                  <Button type="submit" variant="secondary" className="w-full" disabled={isTrackSubmitting}>
+                    {isTrackSubmitting ? "Searching..." : "Track Application"}
                   </Button>
                 </form>
               </CardContent>
