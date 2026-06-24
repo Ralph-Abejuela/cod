@@ -106,6 +106,66 @@ export default async function TrackApplicationPage({
 		"None";
 	const totalReceived = releases.reduce((sum, r) => sum + r.amount, 0);
 
+	// Compile timeline events
+	const timelineEvents = [];
+
+	timelineEvents.push({
+		id: "evt-reg",
+		date: beneficiary.dateRegistered,
+		title: "Application Submitted",
+		description: "Initial registration into the Community Assist system.",
+		icon: "📋",
+		color: "bg-blue-500",
+	});
+
+	if (beneficiary.dateApproved) {
+		timelineEvents.push({
+			id: "evt-appr",
+			date: beneficiary.dateApproved,
+			title: "Application Approved",
+			description: `Approved by ${beneficiary.approvedBy || "Admin"}`,
+			icon: "✅",
+			color: "bg-emerald-500",
+		});
+	}
+
+	if (beneficiary.dateRejected) {
+		timelineEvents.push({
+			id: "evt-rej",
+			date: beneficiary.dateRejected,
+			title: "Application Rejected",
+			description: `Reason: ${beneficiary.rejectionReason}`,
+			icon: "❌",
+			color: "bg-red-500",
+		});
+	}
+
+	beneficiary.programs.forEach((prog, idx) => {
+		const progName = programNames.get(prog.programId) || prog.programId;
+		timelineEvents.push({
+			id: `evt-prog-${idx}`,
+			date: prog.enrolledDate,
+			title: `Enrolled in Program: ${progName}`,
+			description: `Status: ${prog.status}`,
+			icon: "🏛️",
+			color: "bg-indigo-500",
+		});
+	});
+
+	releases.forEach((r) => {
+		timelineEvents.push({
+			id: r.id,
+			date: r.dateReleased,
+			title: `Benefit Released: ${r.assistanceType}`,
+			description: `Amount: ₱${r.amount.toLocaleString()} - Remarks: ${r.remarks || "None"}`,
+			icon: "💸",
+			color: "bg-emerald-600",
+		});
+	});
+
+	// Sort chronologically
+	timelineEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
 	return (
 		<div className="min-h-screen bg-background print:bg-white print:min-h-0">
 			<header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 print:hidden">
@@ -155,8 +215,7 @@ export default async function TrackApplicationPage({
 							Application Tracker
 						</h1>
 						<p className="text-sm text-muted-foreground print:text-black">
-							Welcome back, {beneficiary.firstName}. Here is the status of your
-							application.
+							Welcome back, {beneficiary.firstName}. Here is the timeline of your benefits and programs.
 						</p>
 					</div>
 					<div className="flex items-center gap-3">
@@ -166,106 +225,33 @@ export default async function TrackApplicationPage({
 				</div>
 
 				<div className="grid gap-8 lg:grid-cols-2">
-					{/* Timeline / Status */}
+					{/* Left Col: Unified Timeline */}
 					<div className="flex flex-col gap-6">
 						<Card>
 							<CardHeader>
-								<CardTitle>Application Timeline</CardTitle>
+								<CardTitle>History & Benefits Timeline</CardTitle>
+								<CardDescription>A chronological view of your enrollments and received benefits.</CardDescription>
 							</CardHeader>
 							<CardContent>
-								<div className="relative border-l pl-6 ml-2 space-y-8">
-									{/* Step 1: Registered */}
-									<div className="relative">
-										<div className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-primary" />
-										<p className="text-sm font-medium">Application Submitted</p>
-										<p className="text-xs text-muted-foreground">
-											{beneficiary.dateRegistered}
-										</p>
-									</div>
-
-									{/* Step 2: Approved / Rejected */}
-									{beneficiary.applicationStatus === "Rejected" ? (
-										<div className="relative">
-											<div className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-destructive" />
-											<p className="text-sm font-medium text-destructive">
-												Application Rejected
-											</p>
-											<p className="text-xs text-muted-foreground">
-												{beneficiary.dateRejected}
-											</p>
-											<p className="mt-1 text-xs font-medium bg-destructive/10 text-destructive p-2 rounded">
-												Reason: {beneficiary.rejectionReason}
-											</p>
+								<div className="relative border-l-2 border-zinc-200 ml-4 space-y-8 pb-4">
+									{timelineEvents.map((evt, index) => (
+										<div key={evt.id} className="relative pl-8">
+											<div className={`absolute -left-[17px] top-1 h-8 w-8 rounded-full border-4 border-white ${evt.color} flex items-center justify-center text-sm shadow-sm`}>
+												{evt.icon}
+											</div>
+											<div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 shadow-sm">
+												<p className="text-xs font-semibold text-muted-foreground mb-1">{evt.date}</p>
+												<h3 className="text-sm font-bold text-zinc-900">{evt.title}</h3>
+												<p className="text-sm text-zinc-600 mt-1">{evt.description}</p>
+											</div>
 										</div>
-									) : (
-										<div className="relative">
-											<div
-												className={`absolute -left-[31px] top-1 h-3 w-3 rounded-full ${beneficiary.dateApproved ? "bg-primary" : "bg-muted border-2 border-primary/50"}`}
-											/>
-											<p
-												className={`text-sm font-medium ${!beneficiary.dateApproved && "text-muted-foreground"}`}
-											>
-												Application Approved
-											</p>
-											{beneficiary.dateApproved && (
-												<>
-													<p className="text-xs text-muted-foreground">
-														{beneficiary.dateApproved}
-													</p>
-													<p className="text-xs text-muted-foreground mt-0.5">
-														Approved by: {beneficiary.approvedBy}
-													</p>
-												</>
-											)}
-										</div>
-									)}
-
-									{/* Step 3: Released (only if not rejected) */}
-									{beneficiary.applicationStatus !== "Rejected" && (
-										<div className="relative">
-											<div
-												className={`absolute -left-[31px] top-1 h-3 w-3 rounded-full ${beneficiary.dateReleased ? "bg-emerald-500" : "bg-muted border-2 border-primary/50"}`}
-											/>
-											<p
-												className={`text-sm font-medium ${!beneficiary.dateReleased && "text-muted-foreground"}`}
-											>
-												Benefits Released
-											</p>
-											{beneficiary.dateReleased && (
-												<p className="text-xs text-muted-foreground">
-													{beneficiary.dateReleased}
-												</p>
-											)}
-										</div>
-									)}
+									))}
 								</div>
 							</CardContent>
 						</Card>
-
-						{/* Benefit Summary */}
-						{releases.length > 0 && (
-							<div className="grid grid-cols-2 gap-4">
-								<Card size="sm">
-									<CardHeader>
-										<CardDescription>Total Benefits Received</CardDescription>
-										<CardTitle className="text-2xl text-emerald-600">
-											₱{totalReceived.toLocaleString()}
-										</CardTitle>
-									</CardHeader>
-								</Card>
-								<Card size="sm">
-									<CardHeader>
-										<CardDescription>Releases</CardDescription>
-										<CardTitle className="text-2xl">
-											{releases.length}
-										</CardTitle>
-									</CardHeader>
-								</Card>
-							</div>
-						)}
 					</div>
 
-					{/* Right Col: ID Card & Info */}
+					{/* Right Col: ID Card & Summary */}
 					<div className="flex flex-col gap-6">
 						<div>
 							<p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -285,64 +271,28 @@ export default async function TrackApplicationPage({
 								status={beneficiary.applicationStatus}
 							/>
 						</div>
+
+						{releases.length > 0 && (
+							<div className="grid grid-cols-2 gap-4">
+								<Card size="sm">
+									<CardHeader>
+										<CardDescription>Total Benefits</CardDescription>
+										<CardTitle className="text-2xl text-emerald-600">
+											₱{totalReceived.toLocaleString()}
+										</CardTitle>
+									</CardHeader>
+								</Card>
+								<Card size="sm">
+									<CardHeader>
+										<CardDescription>Releases</CardDescription>
+										<CardTitle className="text-2xl">
+											{releases.length}
+										</CardTitle>
+									</CardHeader>
+								</Card>
+							</div>
+						)}
 					</div>
-				</div>
-
-				<Separator className="my-8" />
-
-				{/* Releases Table */}
-				<div className="space-y-4">
-					<h2 className="text-lg font-semibold tracking-tight">
-						Benefits Received
-					</h2>
-					<Card>
-						<CardContent className="p-0">
-							{releases.length > 0 ? (
-								<Table>
-									<TableHeader>
-										<TableRow>
-											<TableHead>Date</TableHead>
-											<TableHead>Assistance Type</TableHead>
-											<TableHead>Program</TableHead>
-											<TableHead className="text-right">Amount</TableHead>
-											<TableHead>Releasing Officer</TableHead>
-											<TableHead>Remarks</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{releases.map((r) => (
-											<TableRow key={r.id}>
-												<TableCell className="whitespace-nowrap">
-													{r.dateReleased}
-												</TableCell>
-												<TableCell className="font-medium">
-													{r.assistanceType}
-												</TableCell>
-												<TableCell>
-													<Badge variant="secondary" className="text-[10px]">
-														{r.program}
-													</Badge>
-												</TableCell>
-												<TableCell className="text-right font-semibold text-emerald-600">
-													₱{r.amount.toLocaleString()}
-												</TableCell>
-												<TableCell className="text-xs">
-													{r.releasingOfficer}
-												</TableCell>
-												<TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-													{r.remarks}
-												</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-							) : (
-								<div className="p-8 text-center text-sm text-muted-foreground">
-									No benefits have been released yet.
-								</div>
-							)}
-						</CardContent>
-					</Card>
 				</div>
 			</main>
 		</div>

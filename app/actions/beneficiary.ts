@@ -116,10 +116,11 @@ export async function verifyAndGetBeneficiaryAction(
 
 export async function getBeneficiaryByIdAction(id: string) {
 	try {
+		const cleanId = decodeURIComponent(id).trim().toUpperCase();
 		const b = await db
 			.selectFrom("beneficiary")
 			.selectAll()
-			.where("id", "=", id)
+			.where("id", "=", cleanId)
 			.executeTakeFirst();
 
 		if (!b) return null;
@@ -127,13 +128,13 @@ export async function getBeneficiaryByIdAction(id: string) {
 		const programs = await db
 			.selectFrom("program_enrollment")
 			.selectAll()
-			.where("beneficiaryId", "=", id)
+			.where("beneficiaryId", "=", cleanId)
 			.execute();
 
 		const releases = await db
 			.selectFrom("benefit_release")
 			.selectAll()
-			.where("beneficiaryId", "=", id)
+			.where("beneficiaryId", "=", cleanId)
 			.execute();
 
 		return {

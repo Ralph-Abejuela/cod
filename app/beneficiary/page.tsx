@@ -26,6 +26,7 @@ import {
 	verifyAndGetBeneficiaryAction,
 	getProgramsAction,
 } from "@/app/actions/beneficiary";
+import { getProvinces, getMunicipalities, getBarangays } from "@/app/actions/locations";
 import type { ProgramItem } from "@/lib/beneficiary-data";
 
 // ---------------------------------------------------------------------------
@@ -158,6 +159,40 @@ export default function BeneficiaryPage() {
 		getProgramsAction().then(setProgramsList);
 	}, []);
 
+	// Locations list from actions
+	const [provincesList, setProvincesList] = useState<any[]>([]);
+	const [municipalitiesList, setMunicipalitiesList] = useState<any[]>([]);
+	const [barangaysList, setBarangaysList] = useState<any[]>([]);
+	
+	const [selectedProvCode, setSelectedProvCode] = useState("");
+	const [selectedCitymunCode, setSelectedCitymunCode] = useState("");
+
+	useEffect(() => {
+		getProvinces().then(setProvincesList);
+	}, []);
+
+	useEffect(() => {
+		if (selectedProvCode) {
+			getMunicipalities(selectedProvCode).then(setMunicipalitiesList);
+		} else {
+			setMunicipalitiesList([]);
+		}
+		// Reset dependents
+		setSelectedCitymunCode("");
+		setMunicipality("");
+		setBarangay("");
+	}, [selectedProvCode]);
+
+	useEffect(() => {
+		if (selectedCitymunCode) {
+			getBarangays(selectedCitymunCode).then(setBarangaysList);
+		} else {
+			setBarangaysList([]);
+		}
+		// Reset dependents
+		setBarangay("");
+	}, [selectedCitymunCode]);
+
 	// Form state
 	const [firstName, setFirstName] = useState("");
 	const [middleName, setMiddleName] = useState("");
@@ -182,6 +217,14 @@ export default function BeneficiaryPage() {
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault();
+		
+		// Phone Validation
+		const phoneRegex = /^(09|\+639)\d{9}$/;
+		if (!phoneRegex.test(contactNumber)) {
+			alert("Please enter a valid Philippine mobile number (e.g. 09171234567 or +639171234567).");
+			return;
+		}
+
 		setIsSubmitting(true);
 		setSuccess(null);
 
@@ -231,6 +274,8 @@ export default function BeneficiaryPage() {
 			setBarangay("");
 			setMunicipality("");
 			setProvince("");
+			setSelectedProvCode("");
+			setSelectedCitymunCode("");
 			setProgram("");
 		}
 	}
@@ -357,6 +402,7 @@ export default function BeneficiaryPage() {
 											<Input
 												id="reg-dob"
 												type="date"
+												max={new Date().toISOString().split("T")[0]}
 												value={dateOfBirth}
 												onChange={(e) => setDateOfBirth(e.target.value)}
 												required
@@ -402,9 +448,16 @@ export default function BeneficiaryPage() {
 											<Input
 												id="reg-contact"
 												type="tel"
+												inputMode="numeric"
+												maxLength={13}
 												placeholder="09171234567"
+												pattern="^(09|\+639)\d{9}$"
+												title="Valid Philippine mobile number starting with 09 or +639 followed by 9 digits"
 												value={contactNumber}
-												onChange={(e) => setContactNumber(e.target.value)}
+												onChange={(e) => {
+													const val = e.target.value.replace(/[^\d+]/g, '');
+													if (val.length <= 13) setContactNumber(val);
+												}}
 												required
 											/>
 										</Field>
@@ -427,34 +480,62 @@ export default function BeneficiaryPage() {
 									{/* Address */}
 									<div className="grid gap-4 sm:grid-cols-3">
 										<Field>
-											<FieldLabel htmlFor="reg-brgy">Barangay</FieldLabel>
-											<Input
-												id="reg-brgy"
-												placeholder="Brgy. San Isidro"
-												value={barangay}
-												onChange={(e) => setBarangay(e.target.value)}
-												required
-											/>
+											<FieldLabel>Province</FieldLabel>
+											<Select 
+												value={selectedProvCode} 
+												onValueChange={(code) => {
+													setSelectedProvCode(code);
+													const prov = provincesList.find(p => p.provCode === code);
+													setProvince(prov ? prov.provDesc : "");
+												}}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select Province" />
+												</SelectTrigger>
+												<SelectContent>
+													{provincesList.map(p => (
+														<SelectItem key={p.provCode} value={p.provCode}>{p.provDesc}</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 										</Field>
 										<Field>
-											<FieldLabel htmlFor="reg-muni">Municipality</FieldLabel>
-											<Input
-												id="reg-muni"
-												placeholder="Quezon City"
-												value={municipality}
-												onChange={(e) => setMunicipality(e.target.value)}
-												required
-											/>
+											<FieldLabel>Municipality</FieldLabel>
+											<Select 
+												value={selectedCitymunCode} 
+												onValueChange={(code) => {
+													setSelectedCitymunCode(code);
+													const mun = municipalitiesList.find(m => m.citymunCode === code);
+													setMunicipality(mun ? mun.citymunDesc : "");
+												}}
+												disabled={!selectedProvCode}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select Municipality" />
+												</SelectTrigger>
+												<SelectContent>
+													{municipalitiesList.map(m => (
+														<SelectItem key={m.citymunCode} value={m.citymunCode}>{m.citymunDesc}</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 										</Field>
 										<Field>
-											<FieldLabel htmlFor="reg-prov">Province</FieldLabel>
-											<Input
-												id="reg-prov"
-												placeholder="Metro Manila"
-												value={province}
-												onChange={(e) => setProvince(e.target.value)}
-												required
-											/>
+											<FieldLabel>Barangay</FieldLabel>
+											<Select 
+												value={barangay} 
+												onValueChange={(desc) => setBarangay(desc)}
+												disabled={!selectedCitymunCode}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select Barangay" />
+												</SelectTrigger>
+												<SelectContent>
+													{barangaysList.map(b => (
+														<SelectItem key={b.brgyCode} value={b.brgyDesc}>{b.brgyDesc}</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 										</Field>
 									</div>
 
