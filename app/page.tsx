@@ -14,11 +14,7 @@ export default function Home() {
 						Community Assist
 					</span>
 				</div>
-				<nav className="hidden md:flex gap-6 text-sm font-medium text-zinc-600">
-					<a href="#" className="hover:text-zinc-900 transition-colors">Programs</a>
-					<a href="#" className="hover:text-zinc-900 transition-colors">How it works</a>
-					<a href="#" className="hover:text-zinc-900 transition-colors">Contact</a>
-				</nav>
+
 				<div className="flex gap-3">
 					<Link href="/login">
 						<Button variant="ghost" className="text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100">Log in</Button>
@@ -40,7 +36,7 @@ export default function Home() {
 				<p className="max-w-2xl text-lg sm:text-xl text-zinc-500 mb-10 leading-relaxed">
 					Community Assist is a calm, simple place for your neighbors to ask for help — and for your team to answer with care. No queues, no paperwork weight, no one falling through the cracks.
 				</p>
-				
+
 				<div className="flex flex-col sm:flex-row gap-4">
 					<Link href="/beneficiary">
 						<Button size="lg" className="h-14 px-8 text-base bg-zinc-900 text-white hover:bg-zinc-800 w-full sm:w-auto shadow-md">
@@ -52,14 +48,6 @@ export default function Home() {
 							Track Existing Application
 						</Button>
 					</Link>
-				</div>
-
-				<div className="mt-12 flex items-center justify-center gap-4 text-sm text-zinc-500">
-					<span>✓ Free for residents</span>
-					<span className="hidden sm:inline">·</span>
-					<span>✓ Private by default</span>
-					<span className="hidden sm:inline">·</span>
-					<span>✓ Available in your language</span>
 				</div>
 			</main>
 

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getDashboardStatsAction } from "@/app/actions/beneficiary";
+import { getDashboardStatsAction, getRecentActivityAction, getTeamMembersAction } from "@/app/actions/beneficiary";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { validRoles } from "@/lib/permissions";
@@ -29,9 +29,11 @@ import { UserAvatar } from "@/components/user-avatar";
 import ProgramsTable from "@/components/ProgramsTable";
 
 export default async function DashboardPage() {
-	const [session, stats] = await Promise.all([
+	const [session, stats, recentActivityData, teamData] = await Promise.all([
 		auth.api.getSession({ headers: await headers() }),
 		getDashboardStatsAction(),
+		getRecentActivityAction(),
+		getTeamMembersAction(),
 	]);
 	const isAdmin = session?.user.role === validRoles.admin;
 
@@ -58,52 +60,18 @@ export default async function DashboardPage() {
 		},
 	];
 
-	const recentActivity = [
-		{
-			id: "ACT-001",
-			user: "Maria Santos",
-			action: "Approved Application",
-			status: "Approved",
-			date: "2026-06-24",
-		},
-		{
-			id: "ACT-002",
-			user: "Juan Cruz",
-			action: "Submitted Application",
-			status: "Pending",
-			date: "2026-06-24",
-		},
-		{
-			id: "ACT-003",
-			user: "Ana Reyes",
-			action: "Released Cash Aid",
-			status: "Completed",
-			date: "2026-06-23",
-		},
-		{
-			id: "ACT-004",
-			user: "Carlos Tan",
-			action: "Rejected Application",
-			status: "Under Review",
-			date: "2026-06-23",
-		},
-		{
-			id: "ACT-005",
-			user: "Liza Gomez",
-			action: "Released Pension",
-			status: "Completed",
-			date: "2026-06-22",
-		},
-	];
+	const recentActivity = recentActivityData || [];
 
 	const programStats = stats?.programs || [];
 
 	const getStatusVariant = (status: string) => {
 		switch (status) {
 			case "Completed":
+			case "Released":
 				return "secondary" as const;
 			case "Pending":
 				return "outline" as const;
+			case "Rejected":
 			case "Under Review":
 				return "destructive" as const;
 			case "Approved":
@@ -113,12 +81,12 @@ export default async function DashboardPage() {
 		}
 	};
 
-	const teamMembers = [
-		{ name: "Dir. Jose Manalo", role: "Admin", initials: "JM" },
-		{ name: "Dir. Ana Reyes", role: "Releasing Officer", initials: "AR" },
-		{ name: "Engr. Pedro Santos", role: "Reviewer", initials: "PS" },
-		{ name: "Carlos Tan", role: "Clerk", initials: "CT" },
-	];
+	const teamMembers = (teamData || []).map((u) => ({
+		name: u.name || "Unknown User",
+		role: u.role || "User",
+		initials: (u.name || "U").substring(0, 2).toUpperCase(),
+		image: u.image,
+	}));
 
 	return (
 		<div className="flex min-h-screen flex-col bg-background">
@@ -252,7 +220,7 @@ export default async function DashboardPage() {
 							</CardContent>
 							<CardFooter className="justify-between">
 								<p className="text-xs text-muted-foreground">
-									Showing 5 of 128 entries
+									Showing {recentActivity.length} recent entries
 								</p>
 								<Button variant="outline" size="sm">
 									View All

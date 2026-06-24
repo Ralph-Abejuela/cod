@@ -261,22 +261,14 @@ export default function BeneficiaryPage() {
 
 		if (result.success) {
 			setSuccess(result.id!);
+			
+			// Pre-populate the tracking form with the generated ID so it can be easily tracked
+			setTrackId(result.id!);
+			setTrackLastName(lastName);
 
-			// Reset form
-			setFirstName("");
-			setMiddleName("");
-			setLastName("");
-			setDateOfBirth("");
-			setGender("");
-			setCivilStatus("");
-			setContactNumber("");
-			setEmail("");
-			setBarangay("");
-			setMunicipality("");
-			setProvince("");
-			setSelectedProvCode("");
-			setSelectedCitymunCode("");
-			setProgram("");
+			// We deliberately do NOT clear the form here so that the Beneficiary Card 
+			// remains visible with all their details and the newly generated Control Number.
+			window.scrollTo({ top: 0, behavior: "smooth" });
 		}
 	}
 
@@ -594,7 +586,7 @@ export default function BeneficiaryPage() {
 								program={
 									programsList.find((p) => p.id === program)?.name || program
 								}
-								controlNumber="" // Control number assigned after approval
+								controlNumber={success || ""}
 								status="Pending"
 							/>
 						</div>

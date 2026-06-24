@@ -446,3 +446,84 @@ export async function deleteBeneficiaryAction(id: string) {
 		return { success: false, error: "Failed to delete beneficiary." };
 	}
 }
+
+export async function getRecentActivityAction() {
+	try {
+		// Fetch latest beneficiaries (Approved, Pending, Rejected)
+		const recentBeneficiaries = await db
+			.selectFrom("beneficiary")
+			.select(["id", "firstName", "lastName", "applicationStatus", "dateRegistered", "dateApproved", "dateRejected"])
+			.orderBy("dateRegistered", "desc")
+			.limit(10)
+			.execute();
+
+		// Fetch latest benefit releases
+		const recentReleases = await db
+			.selectFrom("benefit_release")
+			.innerJoin("beneficiary", "beneficiary.id", "benefit_release.beneficiaryId")
+			.select([
+				"benefit_release.id",
+				"beneficiary.firstName",
+				"beneficiary.lastName",
+				"benefit_release.assistanceType",
+				"benefit_release.dateReleased",
+			])
+			.orderBy("benefit_release.dateReleased", "desc")
+			.limit(10)
+			.execute();
+
+		// Combine and format them
+		const activity = [];
+		
+		for (const b of recentBeneficiaries) {
+			let date = b.dateRegistered;
+			let action = "Submitted Application";
+			if (b.applicationStatus === "Approved") {
+				action = "Approved Application";
+				date = b.dateApproved || b.dateRegistered;
+			} else if (b.applicationStatus === "Rejected") {
+				action = "Rejected Application";
+				date = b.dateRejected || b.dateRegistered;
+			}
+
+			activity.push({
+				id: b.id,
+				user: `${b.firstName} ${b.lastName}`,
+				action,
+				status: b.applicationStatus,
+				date,
+			});
+		}
+
+		for (const r of recentReleases) {
+			activity.push({
+				id: r.id,
+				user: `${r.firstName} ${r.lastName}`,
+				action: `Released ${r.assistanceType}`,
+				status: "Completed",
+				date: r.dateReleased,
+			});
+		}
+
+		// Sort by date descending and take top 10
+		return activity
+			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+			.slice(0, 10);
+	} catch (error) {
+		console.error("Error fetching recent activity:", error);
+		return [];
+	}
+}
+
+export async function getTeamMembersAction() {
+	try {
+		const team = await db
+			.selectFrom("user")
+			.select(["id", "name", "role", "image"])
+			.execute();
+		return team;
+	} catch (error) {
+		console.error("Error fetching team members:", error);
+		return [];
+	}
+}
