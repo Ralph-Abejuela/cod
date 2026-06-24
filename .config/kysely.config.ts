@@ -9,10 +9,10 @@ export default defineConfig({
 	// replace me with a real dialect instance OR a dialect name + `dialectConfig` prop.
 	dialect: databaseDialect,
 	migrations: {
-		migrationFolder: "lib/db/migrations",
+		migrationFolder: "../lib/db/migrations",
 	},
 	//   plugins: [],
 	seeds: {
-		seedFolder: "lib/db/seeds",
+		seedFolder: "../lib/db/seeds",
 	},
 });

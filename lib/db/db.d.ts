@@ -27,6 +27,57 @@ export interface Account {
   userId: string;
 }
 
+export interface Beneficiary {
+  applicationStatus: string;
+  approvedBy: string | null;
+  barangay: string;
+  civilStatus: string;
+  contactNumber: string;
+  dateApproved: string | null;
+  dateOfBirth: string;
+  dateRegistered: string;
+  dateRejected: string | null;
+  dateReleased: string | null;
+  email: string | null;
+  firstName: string;
+  gender: string;
+  id: string;
+  lastName: string;
+  middleName: string | null;
+  municipality: string;
+  province: string;
+  rejectionReason: string | null;
+}
+
+export interface BenefitRelease {
+  amount: number;
+  assistanceType: string;
+  beneficiaryId: string;
+  dateReleased: string;
+  id: string;
+  program: string;
+  releasingOfficer: string;
+  remarks: string | null;
+}
+
+export interface Claim {
+  amount: number;
+  beneficiaryId: string;
+  dateClaimed: string;
+  description: string;
+  id: string;
+  program: string;
+  status: string;
+}
+
+export interface ProgramEnrollment {
+  beneficiaryId: string;
+  enrolledDate: string;
+  id: Generated<number>;
+  program: string;
+  status: string;
+}
+
 export interface Session {
   createdAt: Generated<Timestamp>;
   expiresAt: Timestamp;
@@ -64,62 +115,11 @@ export interface Verification {
 
 export interface DB {
   account: Account;
+  beneficiary: Beneficiary;
+  benefit_release: BenefitRelease;
+  claim: Claim;
+  program_enrollment: ProgramEnrollment;
   session: Session;
   user: User;
   verification: Verification;
-  beneficiary: BeneficiaryTable;
-  program_enrollment: ProgramEnrollmentTable;
-  benefit_release: BenefitReleaseTable;
-  claim: ClaimTable;
-}
-
-export interface BeneficiaryTable {
-  id: string;
-  firstName: string;
-  middleName: string | null;
-  lastName: string;
-  dateOfBirth: string;
-  gender: string;
-  civilStatus: string;
-  contactNumber: string;
-  email: string | null;
-  barangay: string;
-  municipality: string;
-  province: string;
-  applicationStatus: string;
-  dateRegistered: string;
-  dateApproved: string | null;
-  dateRejected: string | null;
-  dateReleased: string | null;
-  rejectionReason: string | null;
-  approvedBy: string | null;
-}
-
-export interface ProgramEnrollmentTable {
-  id: Generated<number>;
-  beneficiaryId: string;
-  program: string;
-  enrolledDate: string;
-  status: string;
-}
-
-export interface BenefitReleaseTable {
-  id: string;
-  beneficiaryId: string;
-  program: string;
-  assistanceType: string;
-  amount: number;
-  dateReleased: string;
-  releasingOfficer: string;
-  remarks: string | null;
-}
-
-export interface ClaimTable {
-  id: string;
-  beneficiaryId: string;
-  program: string;
-  description: string;
-  amount: number;
-  dateClaimed: string;
-  status: string;
 }
