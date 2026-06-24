@@ -28,6 +28,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
 	type Beneficiary,
@@ -39,6 +47,8 @@ import {
 	updateApplicationStatusAction,
 	recordBenefitReleaseAction,
 	getProgramsAction,
+	updateBeneficiaryAction,
+	deleteBeneficiaryAction,
 } from "@/app/actions/beneficiary";
 
 function AdminStatusBadge({ status }: { status: ApplicationStatus }) {
@@ -84,6 +94,8 @@ export default function AdminBeneficiariesPage() {
 	const [actionType, setActionType] = useState<"status" | "release" | null>(
 		null,
 	);
+	const [editTarget, setEditTarget] = useState<Beneficiary | null>(null);
+	const [deleteTarget, setDeleteTarget] = useState<Beneficiary | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Status change form
@@ -196,6 +208,43 @@ export default function AdminBeneficiariesPage() {
 			const data = await getAdminBeneficiariesAction();
 			setBeneficiaries(data);
 			cancelAction();
+		}
+		setIsSubmitting(false);
+	}
+
+	async function handleEditSubmit(e: React.FormEvent<HTMLFormElement>) {
+		e.preventDefault();
+		if (!editTarget) return;
+		setIsSubmitting(true);
+		
+		const formData = new FormData(e.currentTarget);
+		const data = {
+			firstName: formData.get("firstName") as string,
+			lastName: formData.get("lastName") as string,
+			province: formData.get("province") as string,
+			municipality: formData.get("municipality") as string,
+			barangay: formData.get("barangay") as string,
+			contactNumber: formData.get("contactNumber") as string,
+		};
+		const programId = formData.get("programId") as string;
+
+		const result = await updateBeneficiaryAction(editTarget.id, data, programId);
+		if (result.success) {
+			const updated = await getAdminBeneficiariesAction();
+			setBeneficiaries(updated);
+			setEditTarget(null);
+		}
+		setIsSubmitting(false);
+	}
+
+	async function handleDelete() {
+		if (!deleteTarget) return;
+		setIsSubmitting(true);
+		const result = await deleteBeneficiaryAction(deleteTarget.id);
+		if (result.success) {
+			const updated = await getAdminBeneficiariesAction();
+			setBeneficiaries(updated);
+			setDeleteTarget(null);
 		}
 		setIsSubmitting(false);
 	}
@@ -355,7 +404,7 @@ export default function AdminBeneficiariesPage() {
 															setNewStatus(b.applicationStatus);
 														}}
 													>
-														Update Status
+														Status
 													</Button>
 													{(b.applicationStatus === "Approved" ||
 														b.applicationStatus === "Released") && (
@@ -368,9 +417,25 @@ export default function AdminBeneficiariesPage() {
 																setActionType("release");
 															}}
 														>
-															Record Release
+															Release
 														</Button>
 													)}
+													<Button
+														variant="outline"
+														size="sm"
+														className="h-7 text-xs"
+														onClick={() => setEditTarget(b)}
+													>
+														Edit
+													</Button>
+													<Button
+														variant="destructive"
+														size="sm"
+														className="h-7 text-xs"
+														onClick={() => setDeleteTarget(b)}
+													>
+														Delete
+													</Button>
 												</TableCell>
 											</TableRow>
 
@@ -506,6 +571,100 @@ export default function AdminBeneficiariesPage() {
 					</CardContent>
 				</Card>
 			</main>
+
+			<Dialog
+				open={!!editTarget}
+				onOpenChange={(open) => !open && setEditTarget(null)}
+			>
+				<DialogContent className="sm:max-w-[500px]">
+					<DialogHeader>
+						<DialogTitle>Edit Beneficiary</DialogTitle>
+						<DialogDescription>
+							Update basic information for {editTarget?.firstName} {editTarget?.lastName}.
+						</DialogDescription>
+					</DialogHeader>
+					<form onSubmit={handleEditSubmit} className="flex flex-col gap-4">
+						<div className="grid grid-cols-2 gap-4">
+							<Field>
+								<FieldLabel>First Name</FieldLabel>
+								<Input name="firstName" defaultValue={editTarget?.firstName} required />
+							</Field>
+							<Field>
+								<FieldLabel>Last Name</FieldLabel>
+								<Input name="lastName" defaultValue={editTarget?.lastName} required />
+							</Field>
+						</div>
+						<div className="grid grid-cols-2 gap-4">
+							<Field>
+								<FieldLabel>Contact Number</FieldLabel>
+								<Input name="contactNumber" defaultValue={editTarget?.contactNumber} required />
+							</Field>
+							<Field>
+								<FieldLabel>Barangay</FieldLabel>
+								<Input name="barangay" defaultValue={editTarget?.barangay} required />
+							</Field>
+						</div>
+						<div className="grid grid-cols-2 gap-4">
+							<Field>
+								<FieldLabel>Municipality</FieldLabel>
+								<Input name="municipality" defaultValue={editTarget?.municipality} required />
+							</Field>
+							<Field>
+								<FieldLabel>Province</FieldLabel>
+								<Input name="province" defaultValue={editTarget?.province} required />
+							</Field>
+						</div>
+						<div className="grid grid-cols-1 gap-4">
+							<Field>
+								<FieldLabel>Program</FieldLabel>
+								<Select name="programId" defaultValue={editTarget?.programs?.[0]?.programId}>
+									<SelectTrigger>
+										<SelectValue placeholder="Select a program" />
+									</SelectTrigger>
+									<SelectContent>
+										{programsList.map((p) => (
+											<SelectItem key={p.id} value={p.id}>
+												{p.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</Field>
+						</div>
+						<DialogFooter className="mt-4">
+							<Button type="button" variant="outline" onClick={() => setEditTarget(null)}>
+								Cancel
+							</Button>
+							<Button type="submit" disabled={isSubmitting}>
+								{isSubmitting ? "Saving..." : "Save Changes"}
+							</Button>
+						</DialogFooter>
+					</form>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog
+				open={!!deleteTarget}
+				onOpenChange={(open) => !open && setDeleteTarget(null)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Delete Beneficiary</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to delete <strong>{deleteTarget?.firstName} {deleteTarget?.lastName}</strong>?
+							This will permanently remove their application and any associated release records. This action cannot be undone.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isSubmitting}>
+							Cancel
+						</Button>
+						<Button variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
+							{isSubmitting ? "Deleting..." : "Delete Permanently"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

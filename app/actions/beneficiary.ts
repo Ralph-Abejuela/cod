@@ -351,3 +351,97 @@ export async function globalSearchAction(query: string) {
 		return [];
 	}
 }
+
+export async function updateBeneficiaryAction(
+	id: string,
+	data: Partial<Omit<Beneficiary, "id">>,
+	programId?: string,
+) {
+	try {
+		const updatePayload: Record<string, unknown> = {
+			firstName: data.firstName,
+			middleName: data.middleName || null,
+			lastName: data.lastName,
+			dateOfBirth: data.dateOfBirth,
+			gender: data.gender,
+			civilStatus: data.civilStatus,
+			contactNumber: data.contactNumber,
+			email: data.email || null,
+			barangay: data.barangay,
+			municipality: data.municipality,
+			province: data.province,
+		};
+
+		// Filter out undefined fields to only update what's provided
+		const filteredPayload = Object.fromEntries(
+			Object.entries(updatePayload).filter(([_, v]) => v !== undefined),
+		);
+
+		if (Object.keys(filteredPayload).length > 0) {
+			await db
+				.updateTable("beneficiary")
+				.set(filteredPayload)
+				.where("id", "=", id)
+				.execute();
+		}
+
+		if (programId) {
+			const existingEnrollment = await db
+				.selectFrom("program_enrollment")
+				.selectAll()
+				.where("beneficiaryId", "=", id)
+				.executeTakeFirst();
+
+			if (existingEnrollment) {
+				if (existingEnrollment.programId !== programId) {
+					await db
+						.updateTable("program_enrollment")
+						.set({ programId })
+						.where("beneficiaryId", "=", id)
+						.execute();
+				}
+			} else {
+				await db
+					.insertInto("program_enrollment")
+					.values({
+						beneficiaryId: id,
+						programId,
+						enrolledDate: new Date().toISOString().split("T")[0],
+						status: "Active",
+					})
+					.execute();
+			}
+		}
+
+		revalidatePath("/admin/beneficiaries");
+		revalidatePath("/dashboard");
+		return { success: true };
+	} catch (error) {
+		console.error("Error updating beneficiary:", error);
+		return { success: false, error: "Failed to update beneficiary details." };
+	}
+}
+
+export async function deleteBeneficiaryAction(id: string) {
+	try {
+		// Delete related records first (if foreign keys don't cascade)
+		await db
+			.deleteFrom("benefit_release")
+			.where("beneficiaryId", "=", id)
+			.execute();
+		await db
+			.deleteFrom("program_enrollment")
+			.where("beneficiaryId", "=", id)
+			.execute();
+
+		// Then delete the beneficiary
+		await db.deleteFrom("beneficiary").where("id", "=", id).execute();
+
+		revalidatePath("/admin/beneficiaries");
+		revalidatePath("/dashboard");
+		return { success: true };
+	} catch (error) {
+		console.error("Error deleting beneficiary:", error);
+		return { success: false, error: "Failed to delete beneficiary." };
+	}
+}
