@@ -4,6 +4,13 @@ import { auth } from "@/lib/auth";
 import { validRoles } from "@/lib/permissions";
 
 export async function proxy(request: NextRequest) {
+	const { pathname } = request.nextUrl;
+
+	// Public routes — no auth required
+	if (pathname === "/" || pathname.startsWith("/beneficiary/track/")) {
+		return NextResponse.next();
+	}
+
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
@@ -13,10 +20,7 @@ export async function proxy(request: NextRequest) {
 	}
 
 	// Admin routes restricted to admin role
-	if (
-		request.nextUrl.pathname.startsWith("/admin") &&
-		session.user.role !== validRoles.admin
-	) {
+	if (pathname.startsWith("/admin") && session.user.role !== validRoles.admin) {
 		return NextResponse.redirect(new URL("/dashboard", request.url));
 	}
 
@@ -24,5 +28,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login|signup|/|track).*)"],
+	matcher: [
+		"/((?!api|_next/static|_next/image|favicon.ico|login|signup|/|track).*)",
+	],
 };
