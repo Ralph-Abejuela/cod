@@ -2,19 +2,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { globalSearchAction } from "@/app/actions/beneficiary";
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function GlobalSearch() {
   const [open, setOpen] = React.useState(false);
@@ -23,7 +14,6 @@ export function GlobalSearch() {
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
 
-  // Debounce the query to avoid spamming the database
   const debouncedQuery = useDebounce(query, 300);
 
   React.useEffect(() => {
@@ -44,21 +34,23 @@ export function GlobalSearch() {
         return;
       }
       setIsLoading(true);
-      const data = await globalSearchAction(debouncedQuery);
-      setResults(data);
-      setIsLoading(false);
+      try {
+        const data = await globalSearchAction(debouncedQuery);
+        setResults(data);
+      } catch (e) {
+        console.error("Search failed", e);
+      } finally {
+        setIsLoading(false);
+      }
     }
     performSearch();
   }, [debouncedQuery]);
 
   const handleSelect = (id: string) => {
     setOpen(false);
-    // Directly navigate to the track page of that beneficiary (assuming admin or secure environment)
-    // Or we could navigate to admin details. Since tracking is available by ID, let's go there.
     router.push(`/beneficiary/track/${id}`);
   };
 
-  // Mock static team members to search as requested
   const teamMembers = [
     { name: "Dir. Jose Manalo", role: "Admin", initials: "JM" },
     { name: "Dir. Ana Reyes", role: "Releasing Officer", initials: "AR" },
@@ -66,9 +58,9 @@ export function GlobalSearch() {
     { name: "Carlos Tan", role: "Clerk", initials: "CT" },
   ];
 
-  const filteredTeam = teamMembers.filter((m) =>
-    m.name.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredTeam = query 
+    ? teamMembers.filter((m) => m.name.toLowerCase().includes(query.toLowerCase()))
+    : [];
 
   return (
     <>
@@ -83,57 +75,102 @@ export function GlobalSearch() {
         </kbd>
       </button>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <Command shouldFilter={false} className="flex size-full flex-col overflow-hidden rounded-xl bg-popover text-popover-foreground">
-          <CommandInput 
-            placeholder="Search beneficiaries, staff, or programs..." 
-            value={query}
-            onValueChange={setQuery}
-          />
-          <CommandList>
-            <CommandEmpty>
-              {isLoading ? "Searching..." : "No results found."}
-            </CommandEmpty>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent 
+          className="top-[20%] translate-y-0 gap-0 p-0 shadow-2xl sm:max-w-[500px] overflow-hidden rounded-xl border bg-popover text-popover-foreground" 
+          showCloseButton={false}
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>Search Database</DialogTitle>
+          </DialogHeader>
+          
+          {/* Input Area */}
+          <div className="flex items-center border-b px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <input
+              placeholder="Search beneficiaries, staff, or programs..."
+              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+          
+          {/* Results Area */}
+          <div className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+            {isLoading && (
+              <div className="py-6 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Searching...
+              </div>
+            )}
 
-            {results.length > 0 ? (
-              <CommandGroup heading="Beneficiaries (Database)">
+            {!isLoading && query && results.length === 0 && filteredTeam.length === 0 && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                No results found.
+              </div>
+            )}
+
+            {!isLoading && results.length > 0 && (
+              <div className="p-1">
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  Beneficiaries (Database)
+                </div>
                 {results.map((b) => (
-                  <CommandItem
+                  <button
                     key={b.id}
-                    value={b.id + " " + b.firstName + " " + b.lastName}
-                    onSelect={() => handleSelect(b.id)}
-                    className="cursor-pointer"
+                    onClick={() => handleSelect(b.id)}
+                    className="group flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted hover:text-accent-foreground text-left transition-colors"
                   >
                     <div className="flex flex-col">
-                      <span className="font-medium">
+                      <span className="font-medium text-foreground group-hover:text-accent-foreground">
                         {b.firstName} {b.lastName}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         ID: {b.id} &middot; Status: {b.applicationStatus}
                       </span>
                     </div>
-                  </CommandItem>
+                  </button>
                 ))}
-              </CommandGroup>
-            ) : null}
+              </div>
+            )}
 
-            {results.length > 0 && filteredTeam.length > 0 ? <CommandSeparator /> : null}
+            {!isLoading && results.length > 0 && filteredTeam.length > 0 && (
+              <div className="-mx-1 h-px bg-border" />
+            )}
 
-            {filteredTeam.length > 0 ? (
-              <CommandGroup heading="Staff Members (Internal)">
+            {!isLoading && filteredTeam.length > 0 && (
+              <div className="p-1">
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  Staff Members (Internal)
+                </div>
                 {filteredTeam.map((m) => (
-                  <CommandItem key={m.name} value={m.name} onSelect={() => setOpen(false)}>
+                  <button
+                    key={m.name}
+                    onClick={() => setOpen(false)}
+                    className="group flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted hover:text-accent-foreground text-left transition-colors"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium">{m.name}</span>
-                      <span className="text-xs text-muted-foreground">{m.role}</span>
+                      <span className="font-medium text-foreground group-hover:text-accent-foreground">
+                        {m.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {m.role}
+                      </span>
                     </div>
-                  </CommandItem>
+                  </button>
                 ))}
-              </CommandGroup>
-            ) : null}
-          </CommandList>
-        </Command>
-      </CommandDialog>
+              </div>
+            )}
+            
+            {/* Show recent searches or helper text when empty */}
+            {!query && !isLoading && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Type a name, ID, or role to search...
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
