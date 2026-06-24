@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
+    "db:auth": "pnpm dlx auth migrate",
     "db:gen": "kysely-codegen --dialect postgres --out-file ./lib/db/db.d.ts --log-level debug",
     "db:migrate:up": "kysely migrate:up",
     "db:migrate:latest": "kysely migrate:latest",
