@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:gen": "kysely-codegen --dialect postgres --out-file ./lib/db/db.d.ts --log-level debug",
+    "db:migrate:up": "kysely migrate:up",
+    "db:migrate:latest": "kysely migrate:latest",
+    "db:migrate:down": "kysely migrate:down",
+    "db:migrate:make": "kysely migrate make"
   },
   "dependencies": {
     "better-auth": "^1.6.20",

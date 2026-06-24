@@ -3,17 +3,17 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
 export async function proxy(request: NextRequest) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    })
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
 
-    if(!session) {
-        return NextResponse.redirect(new URL("/sign-in", request.url));
-    }
+	if (!session) {
+		return NextResponse.redirect(new URL("/login", request.url));
+	}
 
-    return NextResponse.next();
+	return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard"], // Specify the routes the middleware applies to
+	matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login|signup).*)"],
 };
