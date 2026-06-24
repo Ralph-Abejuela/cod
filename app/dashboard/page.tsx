@@ -19,106 +19,21 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getDashboardStatsAction } from "@/app/actions/beneficiary";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { validRoles } from "@/lib/permissions";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { UserAvatar } from "@/components/user-avatar";
 import ProgramsTable from "@/components/ProgramsTable";
 
-// --- Mock data ---
-const summaryStats = [
-	{
-		title: "Total Beneficiaries",
-		value: "1,284",
-		change: "+12 this month",
-		trend: "up",
-	},
-	{
-		title: "Active Applications",
-		value: "56",
-		change: "+3 this week",
-		trend: "up",
-	},
-	{ title: "Pending Reviews", value: "18", change: "5 urgent", trend: "warn" },
-	{
-		title: "Total Released",
-		value: "₱ 12M",
-		change: "₱ 1.2M this month",
-		trend: "up",
-	},
-];
-
-const recentActivity = [
-	{
-		id: "ACT-001",
-		user: "Maria Santos",
-		action: "Approved Application",
-		status: "Approved",
-		date: "2026-06-24",
-	},
-	{
-		id: "ACT-002",
-		user: "Juan Cruz",
-		action: "Submitted Application",
-		status: "Pending",
-		date: "2026-06-24",
-	},
-	{
-		id: "ACT-003",
-		user: "Ana Reyes",
-		action: "Released Cash Aid",
-		status: "Completed",
-		date: "2026-06-23",
-	},
-	{
-		id: "ACT-004",
-		user: "Carlos Tan",
-		action: "Rejected Application",
-		status: "Under Review",
-		date: "2026-06-23",
-	},
-	{
-		id: "ACT-005",
-		user: "Liza Gomez",
-		action: "Released Pension",
-		status: "Completed",
-		date: "2026-06-22",
-	},
-];
-
-const programStats = [
-	{ name: "4Ps", count: 342, pending: 89 },
-	{ name: "Senior Citizen", count: 256, pending: 41 },
-	{ name: "PWD", count: 48, pending: 12 },
-	{ name: "Solo Parent", count: 180, pending: 55 },
-	{ name: "TUPAD", count: 310, pending: 73 },
-	{ name: "AICS", count: 148, pending: 22 },
-];
-
-const teamMembers = [
-	{ name: "Dir. Jose Manalo", role: "Admin", initials: "JM" },
-	{ name: "Dir. Ana Reyes", role: "Releasing Officer", initials: "AR" },
-	{ name: "Engr. Pedro Santos", role: "Reviewer", initials: "PS" },
-	{ name: "Carlos Tan", role: "Clerk", initials: "CT" },
-];
-
-function getStatusVariant(status: string) {
-	switch (status) {
-		case "Completed":
-			return "secondary" as const;
-		case "Pending":
-			return "outline" as const;
-		case "Under Review":
-			return "destructive" as const;
-		case "Approved":
-			return "default" as const;
-		default:
-			return "secondary" as const;
-	}
-}
-
 export default async function DashboardPage() {
-	const stats = await getDashboardStatsAction();
+	const [session, stats] = await Promise.all([
+		auth.api.getSession({ headers: await headers() }),
+		getDashboardStatsAction(),
+	]);
+	const isAdmin = session?.user.role === validRoles.admin;
 
 	const summaryStats = [
 		{
@@ -182,6 +97,29 @@ export default async function DashboardPage() {
 	];
 
 	const programStats = stats?.programs || [];
+
+	const getStatusVariant = (status: string) => {
+		switch (status) {
+			case "Completed":
+				return "secondary" as const;
+			case "Pending":
+				return "outline" as const;
+			case "Under Review":
+				return "destructive" as const;
+			case "Approved":
+				return "default" as const;
+			default:
+				return "secondary" as const;
+		}
+	};
+
+	const teamMembers = [
+		{ name: "Dir. Jose Manalo", role: "Admin", initials: "JM" },
+		{ name: "Dir. Ana Reyes", role: "Releasing Officer", initials: "AR" },
+		{ name: "Engr. Pedro Santos", role: "Reviewer", initials: "PS" },
+		{ name: "Carlos Tan", role: "Clerk", initials: "CT" },
+	];
+
 	return (
 		<div className="flex min-h-screen flex-col bg-background">
 			{/* Header */}
@@ -199,11 +137,20 @@ export default async function DashboardPage() {
 								Dashboard
 							</Button>
 						</Link>
-						<Link href="/admin/beneficiaries">
-							<Button variant="ghost" size="sm" className="font-semibold">
-								Manage Beneficiaries
-							</Button>
-						</Link>
+						{isAdmin && (
+							<Link href="/admin/beneficiaries">
+								<Button variant="ghost" size="sm" className="font-semibold">
+									Manage Beneficiaries
+								</Button>
+							</Link>
+						)}
+						{isAdmin && (
+							<Link href="/admin/users">
+								<Button variant="ghost" size="sm">
+									Manage Users
+								</Button>
+							</Link>
+						)}
 						<Link href="/report">
 							<Button variant="ghost" size="sm">
 								Reports
@@ -253,13 +200,16 @@ export default async function DashboardPage() {
 						<TabsTrigger value="activity">Recent Activity</TabsTrigger>
 						<TabsTrigger value="programs">Program Stats</TabsTrigger>
 						<TabsTrigger value="team">Team</TabsTrigger>
-						<TabsTrigger value="programs-manage">Manage Programs</TabsTrigger>
+						{isAdmin && (
+							<TabsTrigger value="programs-manage">Manage Programs</TabsTrigger>
+						)}
 					</TabsList>
 
-					{/* Tab: Manage Programs */}
-					<TabsContent value="programs-manage">
-						<ProgramsTable />
-					</TabsContent>
+					{isAdmin && (
+						<TabsContent value="programs-manage">
+							<ProgramsTable />
+						</TabsContent>
+					)}
 
 					{/* Tab: Recent Activity */}
 					<TabsContent value="activity">

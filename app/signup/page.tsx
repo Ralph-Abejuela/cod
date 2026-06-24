@@ -66,7 +66,7 @@ export default function SignUpPage() {
 				);
 				return;
 			}
-			router.push("/");
+			router.push("/dashboard");
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Something went wrong");
 		} finally {
