@@ -24,6 +24,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 
 // --- Mock data ---
 const summaryStats = [
@@ -92,10 +93,7 @@ export default function DashboardPage() {
               <Button variant="ghost" size="sm">Reports</Button>
             </Link>
             <Separator orientation="vertical" className="mx-1 h-5" />
-            <Avatar className="h-7 w-7">
-              <AvatarImage src="" alt="User" />
-              <AvatarFallback className="text-[10px]">AD</AvatarFallback>
-            </Avatar>
+            <UserAvatar />
           </nav>
         </div>
       </header>
