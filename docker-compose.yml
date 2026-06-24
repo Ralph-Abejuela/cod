@@ -4,13 +4,34 @@ services:
     container_name: cod-postgres
     restart: unless-stopped
     ports:
-      - "$DB_PORT:5432"
+      - "${DB_PORT:-5432}:5432"
     environment:
-      POSTGRES_USER: $DB_USER
-      POSTGRES_PASSWORD: $DB_PASSWORD
-      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
+      POSTGRES_DB: ${DB_NAME:-codex2026}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cod-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-admin123}@postgres:5432/${DB_NAME:-codex2026}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-c2lPQ0hQGAhoPhGgtb8BEvJtalIvRMBl}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:

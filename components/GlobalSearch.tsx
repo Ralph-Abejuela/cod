@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { globalSearchAction } from "@/app/actions/beneficiary";
 import {
+  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -83,53 +84,55 @@ export function GlobalSearch() {
       </button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput 
-          placeholder="Search beneficiaries, staff, or programs..." 
-          value={query}
-          onValueChange={setQuery}
-        />
-        <CommandList>
-          <CommandEmpty>
-            {isLoading ? "Searching..." : "No results found."}
-          </CommandEmpty>
+        <Command shouldFilter={false} className="flex size-full flex-col overflow-hidden rounded-xl bg-popover text-popover-foreground">
+          <CommandInput 
+            placeholder="Search beneficiaries, staff, or programs..." 
+            value={query}
+            onValueChange={setQuery}
+          />
+          <CommandList>
+            <CommandEmpty>
+              {isLoading ? "Searching..." : "No results found."}
+            </CommandEmpty>
 
-          {results.length > 0 && (
-            <CommandGroup heading="Beneficiaries (Database)">
-              {results.map((b) => (
-                <CommandItem
-                  key={b.id}
-                  value={b.id + " " + b.firstName + " " + b.lastName}
-                  onSelect={() => handleSelect(b.id)}
-                  className="cursor-pointer"
-                >
-                  <div className="flex flex-col">
-                    <span className="font-medium">
-                      {b.firstName} {b.lastName}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ID: {b.id} &middot; Status: {b.applicationStatus}
-                    </span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
+            {results.length > 0 ? (
+              <CommandGroup heading="Beneficiaries (Database)">
+                {results.map((b) => (
+                  <CommandItem
+                    key={b.id}
+                    value={b.id + " " + b.firstName + " " + b.lastName}
+                    onSelect={() => handleSelect(b.id)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {b.firstName} {b.lastName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ID: {b.id} &middot; Status: {b.applicationStatus}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
 
-          {results.length > 0 && filteredTeam.length > 0 && <CommandSeparator />}
+            {results.length > 0 && filteredTeam.length > 0 ? <CommandSeparator /> : null}
 
-          {filteredTeam.length > 0 && (
-            <CommandGroup heading="Staff Members (Internal)">
-              {filteredTeam.map((m) => (
-                <CommandItem key={m.name} value={m.name} onSelect={() => setOpen(false)}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{m.name}</span>
-                    <span className="text-xs text-muted-foreground">{m.role}</span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-        </CommandList>
+            {filteredTeam.length > 0 ? (
+              <CommandGroup heading="Staff Members (Internal)">
+                {filteredTeam.map((m) => (
+                  <CommandItem key={m.name} value={m.name} onSelect={() => setOpen(false)}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{m.name}</span>
+                      <span className="text-xs text-muted-foreground">{m.role}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
+          </CommandList>
+        </Command>
       </CommandDialog>
     </>
   );
