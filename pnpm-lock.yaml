@@ -69,6 +69,9 @@ importers:
       eslint-config-next:
         specifier: 16.2.9
         version: 16.2.9(@typescript-eslint/parser@8.62.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      kysely-codegen:
+        specifier: ^0.20.0
+        version: 0.20.0(kysely@0.29.2)(pg@8.22.0)(typescript@5.9.3)
       kysely-ctl:
         specifier: ^0.21.0
         version: 0.21.0(kysely@0.29.2)
@@ -76,7 +79,7 @@ importers:
         specifier: ^4
         version: 4.3.1
       typescript:
-        specifier: ^5
+        specifier: ^5.9.3
         version: 5.9.3
 
 packages:
@@ -2155,6 +2158,14 @@ packages:
     resolution: {integrity: sha512-tE7ztYzXHIeyvc7N+hR3oi7FIbf/NIjVP9hmAt3yMXzrQ072/fpjGLx2GxNxGxUl5V73MEqYzioOMoVhGMJ5cA==}
     engines: {node: '>=10'}
 
+  dotenv-expand@12.0.3:
+    resolution: {integrity: sha512-uc47g4b+4k/M/SeaW1y4OApx+mtLWl92l5LMPP0GNXctZqELk+YGgOPIIC5elYmUH4OuoK3JLhuRUYegeySiFA==}
+    engines: {node: '>=12'}
+
+  dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
+
   dotenv@17.4.2:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
@@ -2918,6 +2929,41 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
+  kysely-codegen@0.20.0:
+    resolution: {integrity: sha512-LSi2KBG7uDmNCZ+XurLSA9LH7XFyyoQ6xb5DLJSInPTSYLVApjOP2KwO8mSaREWTtoX+C2AG2GTlYR0DLjTbcA==}
+    engines: {node: '>=20.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@libsql/kysely-libsql': '>=0.3.0 <0.5.0'
+      '@tediousjs/connection-string': ^1.0.0
+      better-sqlite3: '>=7.6.2 <13.0.0'
+      kysely: '>=0.27.0 <1.0.0'
+      kysely-bun-sqlite: '>=0.3.2 <1.0.0'
+      kysely-bun-worker: '>=1.2.0 <2.0.0'
+      mysql2: '>=2.3.3 <4.0.0'
+      pg: '>=8.8.0 <9.0.0'
+      tarn: '>=3.0.0 <4.0.0'
+      tedious: '>=18.0.0 <20.0.0'
+    peerDependenciesMeta:
+      '@libsql/kysely-libsql':
+        optional: true
+      '@tediousjs/connection-string':
+        optional: true
+      better-sqlite3:
+        optional: true
+      kysely-bun-sqlite:
+        optional: true
+      kysely-bun-worker:
+        optional: true
+      mysql2:
+        optional: true
+      pg:
+        optional: true
+      tarn:
+        optional: true
+      tedious:
+        optional: true
+
   kysely-ctl@0.21.0:
     resolution: {integrity: sha512-tovLEh+5eHgBt1P9L42Y3lgEI7cXK0nAPIBFg+dmTXUlmb2Ats3X3D0TwUtCV63XzVEdRV5dONa8DBhRiEf8fg==}
     engines: {node: '>=22'}
@@ -3387,6 +3433,10 @@ packages:
   pkg-up@3.1.0:
     resolution: {integrity: sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==}
     engines: {node: '>=8'}
+
+  pluralize@8.0.0:
+    resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
+    engines: {node: '>=4'}
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -6033,6 +6083,12 @@ snapshots:
     dependencies:
       is-obj: 2.0.0
 
+  dotenv-expand@12.0.3:
+    dependencies:
+      dotenv: 16.6.1
+
+  dotenv@16.6.1: {}
+
   dotenv@17.4.2: {}
 
   dunder-proto@1.0.1:
@@ -6945,6 +7001,23 @@ snapshots:
 
   kleur@4.1.5: {}
 
+  kysely-codegen@0.20.0(kysely@0.29.2)(pg@8.22.0)(typescript@5.9.3):
+    dependencies:
+      chalk: 4.1.2
+      cosmiconfig: 9.0.2(typescript@5.9.3)
+      diff: 8.0.4
+      dotenv: 17.4.2
+      dotenv-expand: 12.0.3
+      kysely: 0.29.2
+      micromatch: 4.0.8
+      minimist: 1.2.8
+      pluralize: 8.0.0
+      zod: 4.4.3
+    optionalDependencies:
+      pg: 8.22.0
+    transitivePeerDependencies:
+      - typescript
+
   kysely-ctl@0.21.0(kysely@0.29.2):
     dependencies:
       c12: 3.3.4
@@ -7377,6 +7450,8 @@ snapshots:
   pkg-up@3.1.0:
     dependencies:
       find-up: 3.0.0
+
+  pluralize@8.0.0: {}
 
   possible-typed-array-names@1.1.0: {}
 

@@ -12,11 +12,11 @@
     "better-auth": "^1.6.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "kysely": "^0.29.2",
     "lucide-react": "^1.21.0",
     "next": "16.2.9",
-    "radix-ui": "^1.6.0",
-    "kysely": "^0.29.2",
     "pg": "^8.22.0",
+    "radix-ui": "^1.6.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "shadcn": "^4.11.0",
@@ -31,8 +31,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "kysely-codegen": "^0.20.0",
     "kysely-ctl": "^0.21.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }

@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { databaseDialect } from "./db/database";
+import { admin } from "better-auth/plugins";
 
 export const auth = betterAuth({
    database: {
@@ -10,4 +11,5 @@ export const auth = betterAuth({
         enabled: true,
         minPasswordLength: 6,
     },
+    plugins: [admin()]
 });
